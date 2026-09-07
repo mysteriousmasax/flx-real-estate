@@ -149,9 +149,9 @@ export const FlxLogo: React.FC<FlxLogoProps> = ({
 
         {/* Text Portion: REAL ESTATE */}
         {size !== 'icon' && (
-          <div className="flex flex-col justify-center -ml-1">
+          <div className="flex min-w-0 flex-col justify-center -ml-1">
             <div className="flex items-baseline tracking-widest leading-none">
-              <span className="font-black italic text-transparent bg-clip-text bg-gradient-to-r from-white via-neutral-100 to-neutral-400 text-xl md:text-2xl tracking-[0.25em] drop-shadow-[0_0_15px_rgba(220,38,38,0.3)]">
+              <span className="whitespace-nowrap font-black italic text-transparent bg-clip-text bg-gradient-to-r from-white via-neutral-100 to-neutral-400 text-xl md:text-2xl tracking-[0.25em] drop-shadow-[0_0_15px_rgba(220,38,38,0.3)]">
                 REAL ESTATE
               </span>
             </div>

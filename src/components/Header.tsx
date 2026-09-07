@@ -41,7 +41,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-[#090b0e]/80 backdrop-blur-xl">
-      <div className="hidden lg:flex items-center justify-between px-6 md:px-10 py-2 text-[9px] font-semibold uppercase tracking-[0.24em] text-zinc-400 border-b border-white/5 bg-black/20">
+      <div className="hidden xl:flex items-center justify-between px-6 md:px-10 py-2 text-[9px] font-semibold uppercase tracking-[0.24em] text-zinc-400 border-b border-white/5 bg-black/20">
         <div className="flex items-center gap-4">
           <span className="flex items-center gap-2 text-red-400 font-black">
             <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
@@ -60,16 +60,17 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 h-20 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 min-h-20 flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-6">
           <FlxLogo
-            size="md"
-            showTagline={true}
+            size="sm"
+            showTagline={false}
+            className="shrink-0"
             onClick={() => onSelectView('discovery')}
           />
         </div>
 
-        <div className="hidden md:flex items-center gap-2.5">
+        <div className="hidden xl:flex items-center gap-2.5">
           <button
             onClick={() => onSelectView('discovery')}
             className={`flex items-center gap-2 px-4 py-2.5 text-[10px] tracking-[0.22em] font-black uppercase rounded-xl transition-all duration-200 border ${
@@ -127,7 +128,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         <div className="flex items-center gap-3">
           {activeView === 'discovery' && (
-            <div className="flex items-center bg-white/[0.02] border border-white/10 rounded-xl p-1">
+            <div className="hidden sm:flex items-center bg-white/[0.02] border border-white/10 rounded-xl p-1">
               <button
                 onClick={() => onSelectType('All')}
                 className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] transition-all rounded-lg ${
@@ -180,7 +181,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      <div className="flex md:hidden border-t border-white/5 bg-[#0A0A0A] px-4 py-2.5 justify-around">
+      <div className="flex xl:hidden border-t border-white/5 bg-[#0A0A0A] px-4 py-2.5 justify-around">
         <button
           onClick={() => onSelectView('discovery')}
           className={`flex flex-col items-center gap-1 text-[9px] font-black uppercase tracking-[0.2em] ${
