@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 
 interface DiscoveryEngineProps {
+  audience?: 'Investor' | 'Client';
   properties: Property[];
   savedIds: string[];
   onToggleSave: (id: string) => void;
@@ -27,6 +28,7 @@ interface DiscoveryEngineProps {
 }
 
 export const DiscoveryEngine: React.FC<DiscoveryEngineProps> = ({
+  audience = 'Client',
   properties,
   savedIds,
   onToggleSave,
@@ -286,7 +288,7 @@ export const DiscoveryEngine: React.FC<DiscoveryEngineProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
         <div className="flex items-center gap-4">
           <h2 className="font-headline text-2xl sm:text-4xl font-black italic tracking-[-0.05em] text-white">
-            {filteredProperties.length} AVAILABLE ESTATES
+            {audience === 'Investor' ? `${filteredProperties.length} INVESTMENT OPPORTUNITIES` : `${filteredProperties.length} HOMES TO BUY OR RENT`}
           </h2>
           {selectedType !== 'All' && (
             <span className="px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.25em] bg-red-950 border border-red-600 text-red-300 rounded-full">

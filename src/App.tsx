@@ -11,9 +11,18 @@ import { SavedEstatesModal } from './components/SavedEstatesModal';
 import { GoogleAuthModal } from './components/GoogleAuthModal';
 import { GoogleWorkspaceModal } from './components/GoogleWorkspaceModal';
 import { FlxLogo } from './components/FlxLogo';
+import { useAuth } from './context/AuthContext';
 import { Compass, Camera, ShieldCheck, Heart, Sparkles, MapPin, CheckCircle2 } from 'lucide-react';
 
+function getHomeView(role?: string): ActiveAppView {
+  if (role === 'Agent') return 'agent_intake';
+  if (role === 'Owner') return 'owner_portfolio';
+  if (role === 'Admin') return 'admin_crm';
+  return 'discovery';
+}
+
 export default function App() {
+  const { user } = useAuth();
   // Initialize state with local storage fallback
   const [properties, setProperties] = useState<Property[]>(() => {
     const saved = localStorage.getItem('flx_properties');
@@ -54,11 +63,19 @@ export default function App() {
     return ['prop-flx-001', 'prop-flx-002'];
   });
 
-  const [activeView, setActiveView] = useState<ActiveAppView>('discovery');
-  const [selectedType, setSelectedType] = useState<'All' | PropertyType>('All');
+  const [activeView, setActiveView] = useState<ActiveAppView>(() => getHomeView(user?.role));
+  const [selectedType, setSelectedType] = useState<'All' | PropertyType>(user?.role === 'Investor' ? 'Invest' : 'All');
   const [activePropertyModal, setActivePropertyModal] = useState<Property | null>(null);
   const [savedModalOpen, setSavedModalOpen] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const nextView = getHomeView(user?.role);
+    setActiveView(nextView);
+    if (user?.role === 'Investor' || user?.role === 'Client') {
+      setSelectedType(user.role === 'Investor' ? 'Invest' : 'All');
+    }
+  }, [user?.id, user?.role]);
 
   // Sync to localStorage
   useEffect(() => {
@@ -208,6 +225,7 @@ export default function App() {
 
       {/* Brand Header */}
       <Header
+        userRole={user?.role}
         activeView={activeView}
         onSelectView={setActiveView}
         selectedType={selectedType}
@@ -230,6 +248,7 @@ export default function App() {
       <main className="flex-1 relative z-10">
         {activeView === 'discovery' && (
           <DiscoveryEngine
+            audience={user?.role === 'Investor' ? 'Investor' : 'Client'}
             properties={properties.filter((p) => p.status === 'Approved')}
             savedIds={savedIds}
             onToggleSave={handleToggleSave}

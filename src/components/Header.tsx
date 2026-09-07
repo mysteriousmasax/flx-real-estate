@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 
 interface HeaderProps {
+  userRole?: 'Agent' | 'Investor' | 'Owner' | 'Admin' | 'Client';
   activeView: ActiveAppView;
   onSelectView: (view: ActiveAppView) => void;
   selectedType: 'All' | PropertyType;
@@ -29,6 +30,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
+  userRole,
   activeView,
   onSelectView,
   selectedType,
@@ -72,6 +74,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         <div className="hidden xl:flex items-center gap-2.5">
+          {(userRole === 'Client' || userRole === 'Investor' || !userRole) && (
           <button
             onClick={() => onSelectView('discovery')}
             className={`flex items-center gap-2 px-4 py-2.5 text-[10px] tracking-[0.22em] font-black uppercase rounded-xl transition-all duration-200 border ${
@@ -83,7 +86,9 @@ export const Header: React.FC<HeaderProps> = ({
             <Compass className="w-3.5 h-3.5" />
             <span>Marketplace</span>
           </button>
+          )}
 
+          {(userRole === 'Agent' || !userRole) && (
           <button
             onClick={() => onSelectView('agent_intake')}
             className={`relative flex items-center gap-2 px-4 py-2.5 text-[10px] tracking-[0.22em] font-black uppercase rounded-xl transition-all duration-200 border ${
@@ -98,7 +103,9 @@ export const Header: React.FC<HeaderProps> = ({
               GPS
             </span>
           </button>
+          )}
 
+          {(userRole === 'Owner' || !userRole) && (
           <button
             onClick={() => onSelectView('owner_portfolio')}
             className={`flex items-center gap-2 px-4 py-2.5 text-[10px] tracking-[0.22em] font-black uppercase rounded-xl transition-all duration-200 border ${
@@ -110,7 +117,9 @@ export const Header: React.FC<HeaderProps> = ({
             <Building2 className="w-3.5 h-3.5" />
             <span>Owner Portfolio</span>
           </button>
+          )}
 
+          {(userRole === 'Admin' || !userRole) && (
           <button
             onClick={() => onSelectView('admin_crm')}
             className={`relative flex items-center gap-2 px-4 py-2.5 text-[10px] tracking-[0.22em] font-black uppercase rounded-xl transition-all duration-200 border ${
@@ -125,6 +134,7 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
             )}
           </button>
+          )}
 
           <button
             onClick={() => openWorkspaceModal('calendar')}
@@ -195,6 +205,7 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       <div className="flex xl:hidden border-t border-white/5 bg-[#0A0A0A] px-4 py-2.5 justify-around">
+        {(userRole === 'Client' || userRole === 'Investor' || !userRole) && (
         <button
           onClick={() => onSelectView('discovery')}
           className={`flex flex-col items-center gap-1 text-[9px] font-black uppercase tracking-[0.2em] ${
@@ -204,6 +215,8 @@ export const Header: React.FC<HeaderProps> = ({
           <Compass className="w-4 h-4" />
           <span>Marketplace</span>
         </button>
+        )}
+        {(userRole === 'Agent' || !userRole) && (
         <button
           onClick={() => onSelectView('agent_intake')}
           className={`flex flex-col items-center gap-1 text-[9px] font-black uppercase tracking-[0.2em] ${
@@ -213,6 +226,8 @@ export const Header: React.FC<HeaderProps> = ({
           <Camera className="w-4 h-4" />
           <span>Agent</span>
         </button>
+        )}
+        {(userRole === 'Owner' || !userRole) && (
         <button
           onClick={() => onSelectView('owner_portfolio')}
           className={`flex flex-col items-center gap-1 text-[9px] font-black uppercase tracking-[0.2em] ${
@@ -222,6 +237,8 @@ export const Header: React.FC<HeaderProps> = ({
           <Building2 className="w-4 h-4" />
           <span>Owners</span>
         </button>
+        )}
+        {(userRole === 'Admin' || !userRole) && (
         <button
           onClick={() => onSelectView('admin_crm')}
           className={`flex flex-col items-center gap-1 text-[9px] font-black uppercase tracking-[0.2em] ${
@@ -231,6 +248,7 @@ export const Header: React.FC<HeaderProps> = ({
           <ShieldCheck className="w-4 h-4" />
           <span>Admin</span>
         </button>
+        )}
       </div>
     </header>
   );
