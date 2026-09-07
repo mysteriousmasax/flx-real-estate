@@ -16,7 +16,7 @@ service cloud.firestore {
     }
 
     match /properties/{propertyId} {
-      allow read: if signedIn();
+      allow read: if resource.data.status == 'Approved' || signedIn();
       allow create: if signedIn();
       allow update, delete: if signedIn() && (isAdmin() || resource.data.owner.id == request.auth.uid || resource.data.agent.id == request.auth.uid);
     }
