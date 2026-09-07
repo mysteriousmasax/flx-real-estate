@@ -12,6 +12,7 @@ import { GoogleAuthModal } from './components/GoogleAuthModal';
 import { GoogleWorkspaceModal } from './components/GoogleWorkspaceModal';
 import { FlxLogo } from './components/FlxLogo';
 import { useAuth } from './context/AuthContext';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Compass, Camera, ShieldCheck, Heart, Sparkles, MapPin, CheckCircle2 } from 'lucide-react';
 
 function getHomeView(role?: string): ActiveAppView {
@@ -21,8 +22,32 @@ function getHomeView(role?: string): ActiveAppView {
   return 'discovery';
 }
 
+function getViewFromPath(pathname: string): ActiveAppView {
+  if (pathname.startsWith('/agent')) return 'agent_intake';
+  if (pathname.startsWith('/owner')) return 'owner_portfolio';
+  if (pathname.startsWith('/admin')) return 'admin_crm';
+  return 'discovery';
+}
+
+function getPathForView(view: ActiveAppView, role?: string): string {
+  if (view === 'agent_intake') return '/agent/intake';
+  if (view === 'owner_portfolio') return '/owner/portfolio';
+  if (view === 'admin_crm') return '/admin/dashboard';
+  return role === 'Investor' ? '/investor/opportunities' : '/marketplace';
+}
+
+function canAccessView(view: ActiveAppView, role?: string): boolean {
+  if (!role) return view === 'discovery';
+  if (view === 'agent_intake') return role === 'Agent';
+  if (view === 'owner_portfolio') return role === 'Owner';
+  if (view === 'admin_crm') return role === 'Admin';
+  return role === 'Client' || role === 'Investor';
+}
+
 export default function App() {
   const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   // Initialize state with local storage fallback
   const [properties, setProperties] = useState<Property[]>(() => {
     const saved = localStorage.getItem('flx_properties');
@@ -63,19 +88,37 @@ export default function App() {
     return ['prop-flx-001', 'prop-flx-002'];
   });
 
-  const [activeView, setActiveView] = useState<ActiveAppView>(() => getHomeView(user?.role));
+  const [activeView, setActiveView] = useState<ActiveAppView>(() => getViewFromPath(window.location.pathname));
   const [selectedType, setSelectedType] = useState<'All' | PropertyType>(user?.role === 'Investor' ? 'Invest' : 'All');
   const [activePropertyModal, setActivePropertyModal] = useState<Property | null>(null);
   const [savedModalOpen, setSavedModalOpen] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    const nextView = getHomeView(user?.role);
+    const nextView = getViewFromPath(location.pathname);
     setActiveView(nextView);
-    if (user?.role === 'Investor' || user?.role === 'Client') {
-      setSelectedType(user.role === 'Investor' ? 'Invest' : 'All');
+    if (!canAccessView(nextView, user?.role)) {
+      const homeView = getHomeView(user?.role);
+      setActiveView(homeView);
+      navigate(getPathForView(homeView, user?.role), { replace: true });
+      return;
     }
-  }, [user?.id, user?.role]);
+    if (location.pathname === '/' && user?.role) {
+      const homeView = getHomeView(user.role);
+      setActiveView(homeView);
+      setSelectedType(user.role === 'Investor' ? 'Invest' : 'All');
+      navigate(getPathForView(homeView, user.role), { replace: true });
+    } else if (user?.role === 'Investor' && location.pathname.startsWith('/investor')) {
+      setSelectedType('Invest');
+    } else if (user?.role === 'Client' && location.pathname === '/marketplace') {
+      setSelectedType('All');
+    }
+  }, [location.pathname, user?.id, user?.role, navigate]);
+
+  const handleSelectView = (view: ActiveAppView) => {
+    setActiveView(view);
+    navigate(getPathForView(view, user?.role));
+  };
 
   // Sync to localStorage
   useEffect(() => {
@@ -97,7 +140,8 @@ export default function App() {
         const urlParams = new URLSearchParams(window.location.search);
         const queryPropId = urlParams.get('property');
         const hashMatch = window.location.hash.match(/property=([^&]+)/);
-        const targetId = queryPropId || (hashMatch ? hashMatch[1] : null);
+        const routeMatch = window.location.pathname.match(/^\/property\/([^/]+)/);
+        const targetId = queryPropId || (hashMatch ? hashMatch[1] : null) || (routeMatch ? routeMatch[1] : null);
 
         if (targetId) {
           const match = properties.find((p) => p.id === targetId);
@@ -124,9 +168,7 @@ export default function App() {
   const handleOpenPropertyModal = (prop: Property) => {
     setActivePropertyModal(prop);
     try {
-      const newUrl = new URL(window.location.href);
-      newUrl.searchParams.set('property', prop.id);
-      window.history.replaceState(null, '', newUrl.toString());
+      navigate(`/property/${encodeURIComponent(prop.id)}`);
     } catch (e) {
       console.warn('Could not update URL history:', e);
     }
@@ -135,9 +177,7 @@ export default function App() {
   const handleClosePropertyModal = () => {
     setActivePropertyModal(null);
     try {
-      const newUrl = new URL(window.location.href);
-      newUrl.searchParams.delete('property');
-      window.history.replaceState(null, '', newUrl.pathname + (newUrl.search ? newUrl.search : ''));
+      navigate(getPathForView('discovery', user?.role));
     } catch (e) {
       console.warn('Could not clean URL history:', e);
     }
@@ -227,7 +267,7 @@ export default function App() {
       <Header
         userRole={user?.role}
         activeView={activeView}
-        onSelectView={setActiveView}
+        onSelectView={handleSelectView}
         selectedType={selectedType}
         onSelectType={setSelectedType}
         savedCount={savedIds.length}
@@ -263,7 +303,7 @@ export default function App() {
           <AgentIntakePortal
             onPropertySubmit={handlePropertySubmit}
             onNavigateToDiscovery={(propId) => {
-              setActiveView('discovery');
+              handleSelectView('discovery');
               if (propId) {
                 const target = properties.find((p) => p.id === propId);
                 if (target) handleOpenPropertyModal(target);
@@ -335,13 +375,16 @@ export default function App() {
 
           <div className="flex flex-col items-center md:items-end gap-3 text-xs">
             <div className="flex items-center gap-6 uppercase text-[10px] tracking-[0.3em] font-semibold text-zinc-400">
-              <button onClick={() => setActiveView('discovery')} className="hover:text-white transition-colors">
-                Discovery
+              <button onClick={() => handleSelectView('discovery')} className="hover:text-white transition-colors">
+                Marketplace
               </button>
-              <button onClick={() => setActiveView('agent_intake')} className="hover:text-white transition-colors">
+              <button onClick={() => handleSelectView('agent_intake')} className="hover:text-white transition-colors">
                 Agent Portal
               </button>
-              <button onClick={() => setActiveView('admin_crm')} className="hover:text-white transition-colors">
+              <button onClick={() => handleSelectView('owner_portfolio')} className="hover:text-white transition-colors">
+                Owner Portfolio
+              </button>
+              <button onClick={() => handleSelectView('admin_crm')} className="hover:text-white transition-colors">
                 Admin CRM
               </button>
             </div>

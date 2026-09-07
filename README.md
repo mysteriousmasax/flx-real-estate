@@ -39,3 +39,14 @@ The `cloud-run-deploy.yml` workflow also deploys every push to `main` to the exi
 - `VITE_GOOGLE_CLIENT_ID` and `VITE_GOOGLE_MAPS_API_KEY`: optional build-time integration keys.
 
 The service account must be allowed to deploy the existing service `ais-dev-lhvhtlrgaevi3i4gdaxmvx` in `europe-west2`. If the Cloud Run service has a different name, update `CLOUD_RUN_SERVICE` in the workflow.
+
+## Workspace routes
+
+The application uses role-aware browser routes so each user enters a focused workspace:
+
+- `/marketplace` — client buying and renting marketplace
+- `/investor/opportunities` — investor opportunities and yield-focused listings
+- `/agent/intake` — field agent property registration
+- `/owner/portfolio` — owner property account ledger
+- `/admin/dashboard` — listing approval and lead operations
+- `/property/:id` — shareable property detail view
