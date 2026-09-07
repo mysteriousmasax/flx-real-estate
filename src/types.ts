@@ -106,7 +106,7 @@ export interface FilterState {
   sort_by: 'featured' | 'price_asc' | 'price_desc' | 'cap_rate_desc' | 'newest';
 }
 
-export type ActiveAppView = 'discovery' | 'agent_intake' | 'owner_portfolio' | 'admin_crm';
+export type ActiveAppView = 'discovery' | 'client_account' | 'investor_desk' | 'agent_intake' | 'owner_portfolio' | 'admin_crm';
 
 export type ThemeMode = 'dark' | 'light';
 

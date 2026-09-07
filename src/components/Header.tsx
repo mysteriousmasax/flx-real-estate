@@ -14,7 +14,9 @@ import {
   Bell,
   Sparkles,
   Calendar,
-  Building2
+  Building2,
+  BriefcaseBusiness,
+  ClipboardList
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -76,16 +78,22 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="hidden xl:flex items-center gap-2.5">
           {(userRole === 'Client' || userRole === 'Investor' || !userRole) && (
           <button
-            onClick={() => onSelectView('discovery')}
+            onClick={() => onSelectView(userRole === 'Investor' ? 'investor_desk' : 'discovery')}
             className={`flex items-center gap-2 px-4 py-2.5 text-[10px] tracking-[0.22em] font-black uppercase rounded-xl transition-all duration-200 border ${
-              activeView === 'discovery'
+              (activeView === 'discovery' || activeView === 'investor_desk')
                 ? 'bg-red-600 text-white border-red-600 shadow-[0_10px_24px_rgba(220,38,38,0.38)]'
                 : 'text-zinc-300 hover:text-white border-transparent bg-white/0 hover:bg-white/[0.03]'
             }`}
           >
-            <Compass className="w-3.5 h-3.5" />
-            <span>Marketplace</span>
+            {userRole === 'Investor' ? <BriefcaseBusiness className="w-3.5 h-3.5" /> : <Compass className="w-3.5 h-3.5" />}
+            <span>{userRole === 'Investor' ? 'Opportunities' : 'Marketplace'}</span>
           </button>
+          )}
+
+          {userRole === 'Client' && (
+            <button onClick={() => onSelectView('client_account')} className={`flex items-center gap-2 px-4 py-2.5 text-[10px] tracking-[0.22em] font-black uppercase rounded-xl transition-all duration-200 border ${activeView === 'client_account' ? 'bg-red-600 text-white border-red-600' : 'text-zinc-300 border-transparent hover:bg-white/[0.03]'}`}>
+              <ClipboardList className="w-3.5 h-3.5" /><span>My Activity</span>
+            </button>
           )}
 
           {(userRole === 'Agent' || !userRole) && (
@@ -207,13 +215,18 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex xl:hidden border-t border-white/5 bg-[#0A0A0A] px-4 py-2.5 justify-around">
         {(userRole === 'Client' || userRole === 'Investor' || !userRole) && (
         <button
-          onClick={() => onSelectView('discovery')}
+          onClick={() => onSelectView(userRole === 'Investor' ? 'investor_desk' : 'discovery')}
           className={`flex flex-col items-center gap-1 text-[9px] font-black uppercase tracking-[0.2em] ${
-            activeView === 'discovery' ? 'text-red-500' : 'text-zinc-400'
+            activeView === 'discovery' || activeView === 'investor_desk' ? 'text-red-500' : 'text-zinc-400'
           }`}
         >
-          <Compass className="w-4 h-4" />
-          <span>Marketplace</span>
+          {userRole === 'Investor' ? <BriefcaseBusiness className="w-4 h-4" /> : <Compass className="w-4 h-4" />}
+          <span>{userRole === 'Investor' ? 'Deals' : 'Market'}</span>
+        </button>
+        )}
+        {userRole === 'Client' && (
+        <button onClick={() => onSelectView('client_account')} className={`flex flex-col items-center gap-1 text-[9px] font-black uppercase tracking-[0.2em] ${activeView === 'client_account' ? 'text-red-500' : 'text-zinc-400'}`}>
+          <ClipboardList className="w-4 h-4" /><span>Activity</span>
         </button>
         )}
         {(userRole === 'Agent' || !userRole) && (

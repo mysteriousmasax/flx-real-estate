@@ -6,6 +6,8 @@ import { DiscoveryEngine } from './components/DiscoveryEngine';
 import { AgentIntakePortal } from './components/AgentIntakePortal';
 import { AdminCrm } from './components/AdminCrm';
 import { OwnerPortfolio } from './components/OwnerPortfolio';
+import { InvestorDesk } from './components/InvestorDesk';
+import { ClientAccount } from './components/ClientAccount';
 import { PropertyDetailModal } from './components/PropertyDetailModal';
 import { SavedEstatesModal } from './components/SavedEstatesModal';
 import { GoogleAuthModal } from './components/GoogleAuthModal';
@@ -19,6 +21,7 @@ function getHomeView(role?: string): ActiveAppView {
   if (role === 'Agent') return 'agent_intake';
   if (role === 'Owner') return 'owner_portfolio';
   if (role === 'Admin') return 'admin_crm';
+  if (role === 'Investor') return 'investor_desk';
   return 'discovery';
 }
 
@@ -26,6 +29,8 @@ function getViewFromPath(pathname: string): ActiveAppView {
   if (pathname.startsWith('/agent')) return 'agent_intake';
   if (pathname.startsWith('/owner')) return 'owner_portfolio';
   if (pathname.startsWith('/admin')) return 'admin_crm';
+  if (pathname.startsWith('/investor')) return 'investor_desk';
+  if (pathname.startsWith('/client')) return 'client_account';
   return 'discovery';
 }
 
@@ -33,7 +38,9 @@ function getPathForView(view: ActiveAppView, role?: string): string {
   if (view === 'agent_intake') return '/agent/intake';
   if (view === 'owner_portfolio') return '/owner/portfolio';
   if (view === 'admin_crm') return '/admin/dashboard';
-  return role === 'Investor' ? '/investor/opportunities' : '/marketplace';
+  if (view === 'investor_desk') return '/investor/opportunities';
+  if (view === 'client_account') return '/client/account';
+  return '/marketplace';
 }
 
 function canAccessView(view: ActiveAppView, role?: string): boolean {
@@ -41,6 +48,8 @@ function canAccessView(view: ActiveAppView, role?: string): boolean {
   if (view === 'agent_intake') return role === 'Agent';
   if (view === 'owner_portfolio') return role === 'Owner';
   if (view === 'admin_crm') return role === 'Admin';
+  if (view === 'investor_desk') return role === 'Investor';
+  if (view === 'client_account') return role === 'Client';
   return role === 'Client' || role === 'Investor';
 }
 
@@ -297,6 +306,14 @@ export default function App() {
             onSelectType={setSelectedType}
             onAddLead={handleAddLead}
           />
+        )}
+
+        {activeView === 'investor_desk' && (
+          <InvestorDesk properties={properties} onOpenDetails={handleOpenPropertyModal} />
+        )}
+
+        {activeView === 'client_account' && (
+          <ClientAccount savedProperties={savedProperties} leads={leads} onOpenDetails={handleOpenPropertyModal} />
         )}
 
         {activeView === 'agent_intake' && (
