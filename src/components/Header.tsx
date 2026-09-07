@@ -1,6 +1,8 @@
 import React from 'react';
 import { FlxLogo } from './FlxLogo';
+import { UserProfileMenu } from './UserProfileMenu';
 import { ActiveAppView, PropertyType } from '../types';
+import { useWorkspace } from '../context/WorkspaceContext';
 import { 
   Compass, 
   Camera, 
@@ -10,7 +12,8 @@ import {
   Home, 
   SlidersHorizontal,
   Bell,
-  Sparkles
+  Sparkles,
+  Calendar
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -34,6 +37,8 @@ export const Header: React.FC<HeaderProps> = ({
   pendingCount,
   newLeadsCount,
 }) => {
+  const { openWorkspaceModal } = useWorkspace();
+
   return (
     <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-[#0A0A0A]/90 backdrop-blur-md">
       {/* Top Brushed Chrome / System Status Bar */}
@@ -113,6 +118,18 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
             )}
           </button>
+
+          <button
+            onClick={() => openWorkspaceModal('calendar')}
+            className="flex items-center gap-1.5 px-3.5 py-2 text-[10px] tracking-[0.25em] font-black uppercase transition-all duration-200 border border-blue-500/40 text-blue-400 bg-blue-950/30 hover:bg-blue-600 hover:text-white hover:border-blue-600 shadow-sm"
+            title="Google Calendar, Gmail, Contacts & Chat"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+            <span>Workspace</span>
+            <span className="px-1 py-0.2 rounded text-[8px] bg-blue-900 border border-blue-400/40 text-blue-200 font-mono">
+              SUITE
+            </span>
+          </button>
         </div>
 
         {/* Right Section: Invest / Live Pill Toggle & Actions */}
@@ -168,10 +185,8 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </button>
 
-          {/* User / Agent Avatar Pill */}
-          <div className="h-9 w-9 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-[10px] font-black uppercase tracking-wider text-white select-none">
-            FLX
-          </div>
+          {/* User / Agent Google Auth & Theme Controls */}
+          <UserProfileMenu />
         </div>
       </div>
 

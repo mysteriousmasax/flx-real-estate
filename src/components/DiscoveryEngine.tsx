@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Property, FilterState, PropertyType, Lead } from '../types';
 import { PropertyCard } from './PropertyCard';
 import { InteractiveMap } from './InteractiveMap';
+import { GoogleMapView } from './GoogleMapView';
 import { 
   Search, 
   SlidersHorizontal, 
@@ -36,6 +37,8 @@ export const DiscoveryEngine: React.FC<DiscoveryEngineProps> = ({
 }) => {
   // Layout view mode: split, map_only, feed_only
   const [layoutMode, setLayoutMode] = useState<'split' | 'map_only' | 'feed_only'>('split');
+  const hasGoogleMapsKey = Boolean(((import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY as string)?.trim());
+  const [mapEngine, setMapEngine] = useState<'google' | 'satellite'>(hasGoogleMapsKey ? 'google' : 'satellite');
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState<boolean>(false);
 
@@ -293,7 +296,7 @@ export const DiscoveryEngine: React.FC<DiscoveryEngineProps> = ({
       </div>
 
       {/* Results Header */}
-      <div className="flex items-center justify-between border-b border-white/10 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
         <div className="flex items-center gap-4">
           <h2 className="font-headline text-2xl sm:text-3xl font-black italic tracking-tighter text-white">
             {filteredProperties.length} AVAILABLE ESTATES
@@ -304,9 +307,37 @@ export const DiscoveryEngine: React.FC<DiscoveryEngineProps> = ({
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2 text-[9px] uppercase tracking-[0.25em] font-black text-zinc-500 font-mono">
-          <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />
-          RADAR TRACKING ACTIVE
+        
+        <div className="flex items-center gap-3">
+          {/* Map Engine Selector */}
+          <div className="flex items-center bg-black/60 p-1 border border-white/10 rounded-xl">
+            <button
+              onClick={() => setMapEngine('google')}
+              className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] rounded-lg transition-all ${
+                mapEngine === 'google'
+                  ? 'bg-red-600 text-white shadow'
+                  : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              <span className="w-2 h-2 rounded-full bg-blue-400" />
+              Google Maps
+            </button>
+            <button
+              onClick={() => setMapEngine('satellite')}
+              className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] rounded-lg transition-all ${
+                mapEngine === 'satellite'
+                  ? 'bg-zinc-800 text-white shadow'
+                  : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              Satellite Radar
+            </button>
+          </div>
+
+          <div className="hidden sm:flex items-center gap-2 text-[9px] uppercase tracking-[0.25em] font-black text-zinc-500 font-mono">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />
+            LIVE TELEMETRY
+          </div>
         </div>
       </div>
 
@@ -315,14 +346,26 @@ export const DiscoveryEngine: React.FC<DiscoveryEngineProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left Column: Interactive Map (5 cols) */}
           <div className="lg:col-span-6 sticky top-28 h-[600px]">
-            <InteractiveMap
-              properties={filteredProperties}
-              selectedProperty={selectedProperty}
-              onSelectProperty={(prop) => setSelectedProperty(prop)}
-              onOpenDetails={onOpenDetails}
-              activeType={selectedType}
-              className="h-full"
-            />
+            {mapEngine === 'google' ? (
+              <GoogleMapView
+                properties={filteredProperties}
+                selectedProperty={selectedProperty}
+                onSelectProperty={(prop) => setSelectedProperty(prop)}
+                onOpenDetails={onOpenDetails}
+                activeType={selectedType}
+                className="h-full"
+                onSwitchToSatellite={() => setMapEngine('satellite')}
+              />
+            ) : (
+              <InteractiveMap
+                properties={filteredProperties}
+                selectedProperty={selectedProperty}
+                onSelectProperty={(prop) => setSelectedProperty(prop)}
+                onOpenDetails={onOpenDetails}
+                activeType={selectedType}
+                className="h-full"
+              />
+            )}
           </div>
 
           {/* Right Column: Listing Cards Feed (6 cols) */}
@@ -358,14 +401,26 @@ export const DiscoveryEngine: React.FC<DiscoveryEngineProps> = ({
 
       {layoutMode === 'map_only' && (
         <div className="h-[700px] w-full">
-          <InteractiveMap
-            properties={filteredProperties}
-            selectedProperty={selectedProperty}
-            onSelectProperty={(prop) => setSelectedProperty(prop)}
-            onOpenDetails={onOpenDetails}
-            activeType={selectedType}
-            className="h-full"
-          />
+          {mapEngine === 'google' ? (
+            <GoogleMapView
+              properties={filteredProperties}
+              selectedProperty={selectedProperty}
+              onSelectProperty={(prop) => setSelectedProperty(prop)}
+              onOpenDetails={onOpenDetails}
+              activeType={selectedType}
+              className="h-full"
+              onSwitchToSatellite={() => setMapEngine('satellite')}
+            />
+          ) : (
+            <InteractiveMap
+              properties={filteredProperties}
+              selectedProperty={selectedProperty}
+              onSelectProperty={(prop) => setSelectedProperty(prop)}
+              onOpenDetails={onOpenDetails}
+              activeType={selectedType}
+              className="h-full"
+            />
+          )}
         </div>
       )}
 

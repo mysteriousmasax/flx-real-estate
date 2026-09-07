@@ -3,6 +3,7 @@ import QRCode from 'qrcode';
 import { Property, Lead } from '../types';
 import { InvestmentCalculator } from './InvestmentCalculator';
 import { PropertyQrModal } from './PropertyQrModal';
+import { useWorkspace } from '../context/WorkspaceContext';
 import { 
   X, 
   Play, 
@@ -29,7 +30,8 @@ import {
   Download,
   Printer,
   Smartphone,
-  Globe
+  Globe,
+  MessageSquare
 } from 'lucide-react';
 
 interface PropertyDetailModalProps {
@@ -80,6 +82,10 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   const [preferredDate, setPreferredDate] = useState('');
   const [message, setMessage] = useState('');
   const [submittedLead, setSubmittedLead] = useState(false);
+  const [syncToCalendar, setSyncToCalendar] = useState(true);
+  const [sendGmailBrochure, setSendGmailBrochure] = useState(true);
+
+  const { schedulePropertyTour, sendPropertyBrochure, openWorkspaceModal } = useWorkspace();
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -104,11 +110,31 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
       message: message || `Inquiring about ${property.title} listed at ${formatCurrency(property.price)}`,
     });
 
+    // Google Calendar Sync
+    if (syncToCalendar && preferredDate) {
+      schedulePropertyTour(
+        property,
+        clientName,
+        clientEmail,
+        preferredDate,
+        message || 'VIP estate inspection coordinated via FLX Private Client Services.'
+      );
+    }
+
+    // Gmail Brochure Dispatch
+    if (sendGmailBrochure) {
+      sendPropertyBrochure(
+        property,
+        clientEmail,
+        `Dear ${clientName}, here is the executive acquisition portfolio for ${property.title}.`
+      );
+    }
+
     setSubmittedLead(true);
     setTimeout(() => {
       setSubmittedLead(false);
       onClose();
-    }, 2500);
+    }, 2800);
   };
 
   return (
@@ -531,6 +557,45 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                       placeholder="Specify timing, 1031 exchange requirements, or private chauffeur/boat arrival preferences..."
                       className="w-full p-2.5 rounded-xl bg-[#0c0d10] border border-white/10 text-xs text-white focus:border-red-500 focus:outline-none"
                     />
+                  </div>
+
+                  {/* Google Workspace Automations */}
+                  <div className="p-3.5 rounded-xl bg-black/60 border border-blue-500/30 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-blue-400 font-bold flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        Google Workspace Sync Options
+                      </span>
+                      <span className="text-[9px] font-mono text-zinc-400">mysteriousmasax@gmail.com</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                      <label className="flex items-center gap-2 text-zinc-300 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={syncToCalendar}
+                          onChange={(e) => setSyncToCalendar(e.target.checked)}
+                          className="rounded border-white/20 bg-black text-blue-600 focus:ring-0"
+                        />
+                        <span className="flex items-center gap-1 text-[11px]">
+                          <Calendar className="w-3.5 h-3.5 text-blue-400" />
+                          Add Tour to Google Calendar
+                        </span>
+                      </label>
+
+                      <label className="flex items-center gap-2 text-zinc-300 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={sendGmailBrochure}
+                          onChange={(e) => setSendGmailBrochure(e.target.checked)}
+                          className="rounded border-white/20 bg-black text-red-600 focus:ring-0"
+                        />
+                        <span className="flex items-center gap-1 text-[11px]">
+                          <Mail className="w-3.5 h-3.5 text-red-400" />
+                          Dispatch PDF Dossier via Gmail
+                        </span>
+                      </label>
+                    </div>
                   </div>
 
                   <button

@@ -7,6 +7,8 @@ import { AgentIntakePortal } from './components/AgentIntakePortal';
 import { AdminCrm } from './components/AdminCrm';
 import { PropertyDetailModal } from './components/PropertyDetailModal';
 import { SavedEstatesModal } from './components/SavedEstatesModal';
+import { GoogleAuthModal } from './components/GoogleAuthModal';
+import { GoogleWorkspaceModal } from './components/GoogleWorkspaceModal';
 import { FlxLogo } from './components/FlxLogo';
 import { Compass, Camera, ShieldCheck, Heart, Sparkles, MapPin, CheckCircle2 } from 'lucide-react';
 
@@ -264,6 +266,15 @@ export default function App() {
         savedProperties={savedProperties}
         onRemoveSaved={handleToggleSave}
         onOpenDetails={handleOpenPropertyModal}
+      />
+
+      {/* Google Authentication SSO Modal */}
+      <GoogleAuthModal />
+
+      {/* Google Workspace Suite Modal (Calendar, Gmail, Contacts, Chat) */}
+      <GoogleWorkspaceModal
+        properties={properties}
+        onOpenPropertyDetails={handleOpenPropertyModal}
       />
 
       {/* Bold Typography Technical Brand Footer */}

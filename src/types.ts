@@ -96,3 +96,16 @@ export interface FilterState {
 }
 
 export type ActiveAppView = 'discovery' | 'agent_intake' | 'admin_crm';
+
+export type ThemeMode = 'dark' | 'light';
+
+export interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+  picture?: string;
+  role?: 'Agent' | 'Investor' | 'Admin' | 'Client';
+  isVerified?: boolean;
+  provider: 'google';
+  lastLogin?: string;
+}
