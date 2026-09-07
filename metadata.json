@@ -1,0 +1,6 @@
+{
+  "name": "FLX Real Estate",
+  "description": "Tanzania luxury and investment real estate platform featuring high-resolution satellite geospatial radar, 4K video tours, mobile agent intake, and admin CRM.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
