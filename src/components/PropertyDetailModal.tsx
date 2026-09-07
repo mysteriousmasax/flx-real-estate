@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import QRCode from 'qrcode';
-import { Property, Lead } from '../types';
+import { Property, Lead, LeadIntent } from '../types';
 import { InvestmentCalculator } from './InvestmentCalculator';
 import { PropertyQrModal } from './PropertyQrModal';
 import { useWorkspace } from '../context/WorkspaceContext';
@@ -79,6 +79,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   const [clientEmail, setClientEmail] = useState('');
   const [clientPhone, setClientPhone] = useState('');
   const [inquiryType, setInquiryType] = useState<'Tour' | 'Investor_Deck' | 'Make_Offer'>('Tour');
+  const [intent, setIntent] = useState<LeadIntent>('Buy');
   const [preferredDate, setPreferredDate] = useState('');
   const [message, setMessage] = useState('');
   const [submittedLead, setSubmittedLead] = useState(false);
@@ -106,6 +107,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
       client_email: clientEmail,
       client_phone: clientPhone || '+1 (555) 000-0000',
       inquiry_type: inquiryType,
+      intent,
       preferred_date: preferredDate,
       message: message || `Inquiring about ${property.title} listed at ${formatCurrency(property.price)}`,
     });
@@ -483,7 +485,24 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                     <h3 className="font-headline text-lg font-black italic uppercase tracking-tight text-white">Book VIP Tour or Request Investment Packet</h3>
                   </div>
 
-                  {/* Inquiry Type Selector */}
+                  <div className="grid grid-cols-2 gap-2">
+                    {(['Buy', 'Rent'] as const).map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => setIntent(option)}
+                        className={`py-2.5 px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all border ${
+                          intent === option
+                            ? option === 'Buy' ? 'bg-emerald-600 text-white border-emerald-500' : 'bg-red-600 text-white border-red-500'
+                            : 'bg-[#0c0d10] text-neutral-400 border-white/10 hover:text-white'
+                        }`}
+                      >
+                        I want to {option.toLowerCase()}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Client request type */}
                   <div className="grid grid-cols-3 gap-2">
                     {(['Tour', 'Investor_Deck', 'Make_Offer'] as const).map((type) => (
                       <button

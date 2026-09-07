@@ -9,12 +9,12 @@ export const GoogleAuthModal: React.FC = () => {
 
   const [customEmail, setCustomEmail] = useState('');
   const [customName, setCustomName] = useState('');
-  const [selectedRole, setSelectedRole] = useState<'Agent' | 'Investor' | 'Admin'>('Agent');
+  const [selectedRole, setSelectedRole] = useState<'Agent' | 'Investor' | 'Owner' | 'Admin' | 'Client'>('Client');
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   if (!isAuthModalOpen) return null;
 
-  const handleQuickSignIn = (email: string, name: string, role: 'Agent' | 'Investor' | 'Admin') => {
+  const handleQuickSignIn = (email: string, name: string, role: 'Agent' | 'Investor' | 'Owner' | 'Admin' | 'Client') => {
     signInWithGoogle({
       email,
       name,
@@ -92,7 +92,7 @@ export const GoogleAuthModal: React.FC = () => {
           <button
             id="btn-google-sso-primary"
             disabled={isLoading}
-            onClick={() => handleQuickSignIn('mysteriousmasax@gmail.com', 'Masax', 'Agent')}
+            onClick={() => handleQuickSignIn('mysteriousmasax@gmail.com', 'Masax', 'Client')}
             className="w-full py-3.5 px-4 bg-white hover:bg-zinc-100 text-zinc-900 font-bold text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-3 shadow-lg shadow-white/5 transition-all hover:scale-[1.01] active:scale-[0.99] border border-white/20"
           >
             <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
@@ -135,6 +135,15 @@ export const GoogleAuthModal: React.FC = () => {
                   <div className="text-white font-bold truncate text-[11px]">Field Agent</div>
                   <div className="text-[9px] text-zinc-400 truncate">Intake & GPS</div>
                 </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleQuickSignIn('owner.flx@gmail.com', 'FLX Property Owner', 'Owner')}
+                className="p-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-left transition-colors flex items-center gap-2 text-xs"
+              >
+                <div className="w-7 h-7 rounded-full bg-blue-600/30 border border-blue-500 flex items-center justify-center shrink-0"><User className="w-3.5 h-3.5 text-blue-400" /></div>
+                <div className="min-w-0 flex-1"><div className="text-white font-bold truncate text-[11px]">Property Owner</div><div className="text-[9px] text-zinc-400 truncate">Asset account</div></div>
               </button>
 
               <button
@@ -199,6 +208,8 @@ export const GoogleAuthModal: React.FC = () => {
                   >
                     <option value="Agent">Agent</option>
                     <option value="Investor">Investor</option>
+                    <option value="Owner">Property Owner</option>
+                    <option value="Client">Client / Renter</option>
                     <option value="Admin">Admin</option>
                   </select>
                 </div>

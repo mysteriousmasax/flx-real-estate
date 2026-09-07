@@ -51,6 +51,9 @@ export const AgentIntakePortal: React.FC<AgentIntakePortalProps> = ({
 
   // Form Fields - Tanzania Cadastre
   const [title, setTitle] = useState<string>('');
+  const [ownerName, setOwnerName] = useState<string>('');
+  const [ownerEmail, setOwnerEmail] = useState<string>('');
+  const [ownerPhone, setOwnerPhone] = useState<string>('');
   const [propertyType, setPropertyType] = useState<PropertyType>('Invest');
   const [price, setPrice] = useState<number>(3500000);
   const [address, setAddress] = useState<string>('14 Toure Drive, Plot 28');
@@ -216,6 +219,13 @@ export const AgentIntakePortal: React.FC<AgentIntakePortalProps> = ({
         neighborhood: `${ward}, ${district} • ${region}, Tanzania`,
       },
       agent: agent,
+      owner: {
+        id: `owner-${propertyId}`,
+        name: ownerName,
+        email: ownerEmail,
+        phone: ownerPhone,
+        accountStatus: 'Invited',
+      },
       metadata: {
         beds: Number(beds),
         baths: Number(baths),
@@ -488,6 +498,18 @@ export const AgentIntakePortal: React.FC<AgentIntakePortalProps> = ({
 
                 {/* Type: Invest vs Live */}
                 <div>
+
+                <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-500/30 space-y-3">
+                  <div>
+                    <span className="text-[10px] text-emerald-400 font-black uppercase tracking-[0.25em]">Owner account linkage</span>
+                    <p className="text-xs text-zinc-400 mt-1">This registered property becomes visible in the owner’s account after approval.</p>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <input type="text" required value={ownerName} onChange={(e) => setOwnerName(e.target.value)} placeholder="Owner full name *" className="w-full p-2.5 rounded-xl bg-[#0c0d10] border border-white/10 text-xs text-white focus:border-emerald-500 focus:outline-none" />
+                    <input type="email" required value={ownerEmail} onChange={(e) => setOwnerEmail(e.target.value)} placeholder="Owner email *" className="w-full p-2.5 rounded-xl bg-[#0c0d10] border border-white/10 text-xs text-white focus:border-emerald-500 focus:outline-none" />
+                    <input type="tel" required value={ownerPhone} onChange={(e) => setOwnerPhone(e.target.value)} placeholder="Owner phone *" className="w-full p-2.5 rounded-xl bg-[#0c0d10] border border-white/10 text-xs text-white focus:border-emerald-500 focus:outline-none" />
+                  </div>
+                </div>
                   <label className="text-xs text-neutral-400 block mb-1">Primary Classification *</label>
                   <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-[#0c0d10] border border-white/10">
                     <button

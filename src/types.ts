@@ -24,6 +24,14 @@ export interface AgentInfo {
   role: string;
 }
 
+export interface OwnerInfo {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  accountStatus: 'Invited' | 'Active';
+}
+
 export interface PropertyMetadata {
   beds: number;
   baths: number;
@@ -58,6 +66,7 @@ export interface Property {
   images: string[];
   location: PropertyLocation;
   agent: AgentInfo;
+  owner?: OwnerInfo;
   metadata: PropertyMetadata;
   description: string;
   featured?: boolean;
@@ -66,6 +75,7 @@ export interface Property {
 
 export type LeadStatus = 'New' | 'Contacted' | 'Tour_Scheduled' | 'Offer_Placed' | 'Closed';
 export type InquiryType = 'Tour' | 'Investor_Deck' | 'Make_Offer' | 'General';
+export type LeadIntent = 'Buy' | 'Rent';
 
 export interface Lead {
   id: string;
@@ -75,6 +85,7 @@ export interface Lead {
   client_email: string;
   client_phone: string;
   inquiry_type: InquiryType;
+  intent: LeadIntent;
   budget?: string;
   preferred_date?: string;
   message: string;
@@ -95,7 +106,7 @@ export interface FilterState {
   sort_by: 'featured' | 'price_asc' | 'price_desc' | 'cap_rate_desc' | 'newest';
 }
 
-export type ActiveAppView = 'discovery' | 'agent_intake' | 'admin_crm';
+export type ActiveAppView = 'discovery' | 'agent_intake' | 'owner_portfolio' | 'admin_crm';
 
 export type ThemeMode = 'dark' | 'light';
 
@@ -104,7 +115,7 @@ export interface AuthUser {
   name: string;
   email: string;
   picture?: string;
-  role?: 'Agent' | 'Investor' | 'Admin' | 'Client';
+  role?: 'Agent' | 'Investor' | 'Owner' | 'Admin' | 'Client';
   isVerified?: boolean;
   provider: 'google';
   lastLogin?: string;

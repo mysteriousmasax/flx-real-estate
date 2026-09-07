@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Property, Lead, ActiveAppView, PropertyType, ApprovalStatus, LeadStatus } from './types';
+import { Property, Lead, ActiveAppView, PropertyType, ApprovalStatus, LeadStatus, OwnerInfo } from './types';
 import { INITIAL_PROPERTIES, INITIAL_LEADS } from './data/mockProperties';
 import { Header } from './components/Header';
 import { DiscoveryEngine } from './components/DiscoveryEngine';
 import { AgentIntakePortal } from './components/AgentIntakePortal';
 import { AdminCrm } from './components/AdminCrm';
+import { OwnerPortfolio } from './components/OwnerPortfolio';
 import { PropertyDetailModal } from './components/PropertyDetailModal';
 import { SavedEstatesModal } from './components/SavedEstatesModal';
 import { GoogleAuthModal } from './components/GoogleAuthModal';
@@ -18,12 +19,15 @@ export default function App() {
     const saved = localStorage.getItem('flx_properties');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        return (JSON.parse(saved) as Property[]).map((property) => ({
+          ...property,
+          owner: property.owner || createOwnerRecord(property),
+        }));
       } catch (e) {
         console.error('Failed parsing properties:', e);
       }
     }
-    return INITIAL_PROPERTIES;
+    return INITIAL_PROPERTIES.map((property) => ({ ...property, owner: createOwnerRecord(property) }));
   });
 
   const [leads, setLeads] = useState<Lead[]>(() => {
@@ -138,7 +142,9 @@ export default function App() {
   // Approval status change from Admin CRM
   const handleUpdatePropertyStatus = (propertyId: string, status: ApprovalStatus) => {
     setProperties((prev) =>
-      prev.map((p) => (p.id === propertyId ? { ...p, status } : p))
+      prev.map((p) => (p.id === propertyId
+        ? { ...p, status, owner: p.owner ? { ...p.owner, accountStatus: status === 'Approved' ? 'Active' : p.owner.accountStatus } : p.owner }
+        : p))
     );
     showToast(`Listing status updated to ${status}.`);
   };
@@ -180,6 +186,16 @@ export default function App() {
   const pendingCount = properties.filter((p) => p.status === 'Pending').length;
   const newLeadsCount = leads.filter((l) => l.status === 'New').length;
   const savedProperties = properties.filter((p) => savedIds.includes(p.id));
+
+  function createOwnerRecord(property: Property): OwnerInfo {
+    return {
+      id: `owner-${property.id}`,
+      name: `${property.title} Owner`,
+      email: `owner+${property.id}@flxrealestate.com`,
+      phone: '+255 700 000 000',
+      accountStatus: 'Active',
+    };
+  }
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col font-sans selection:bg-red-600 selection:text-white relative">
@@ -245,6 +261,10 @@ export default function App() {
             onUpdateLeadStatus={handleUpdateLeadStatus}
             onViewProperty={handleOpenPropertyModal}
           />
+        )}
+
+        {activeView === 'owner_portfolio' && (
+          <OwnerPortfolio properties={properties} leads={leads} onViewProperty={handleOpenPropertyModal} />
         )}
       </main>
 

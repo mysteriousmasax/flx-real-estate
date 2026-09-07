@@ -13,7 +13,8 @@ import {
   SlidersHorizontal,
   Bell,
   Sparkles,
-  Calendar
+  Calendar,
+  Building2
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -48,7 +49,7 @@ export const Header: React.FC<HeaderProps> = ({
             FLX Market Intelligence
           </span>
           <span className="text-white/10">•</span>
-          <span>Tanzania Investment View</span>
+            <span>Owners • Agents • Investors • Renters</span>
         </div>
         <div className="flex items-center gap-5">
           <span>
@@ -80,7 +81,7 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <Compass className="w-3.5 h-3.5" />
-            <span>Discovery</span>
+            <span>Marketplace</span>
           </button>
 
           <button
@@ -96,6 +97,18 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="px-1.5 py-0.5 rounded-md text-[8px] bg-red-950/70 border border-red-500/40 text-red-200 font-mono">
               GPS
             </span>
+          </button>
+
+          <button
+            onClick={() => onSelectView('owner_portfolio')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-[10px] tracking-[0.22em] font-black uppercase rounded-xl transition-all duration-200 border ${
+              activeView === 'owner_portfolio'
+                ? 'bg-emerald-600 text-white border-emerald-600 shadow-[0_10px_24px_rgba(16,185,129,0.25)]'
+                : 'border-emerald-500/30 text-emerald-300 bg-emerald-500/5 hover:bg-emerald-500/10 hover:text-white'
+            }`}
+          >
+            <Building2 className="w-3.5 h-3.5" />
+            <span>Owner Portfolio</span>
           </button>
 
           <button
@@ -189,7 +202,7 @@ export const Header: React.FC<HeaderProps> = ({
           }`}
         >
           <Compass className="w-4 h-4" />
-          <span>Discovery</span>
+          <span>Marketplace</span>
         </button>
         <button
           onClick={() => onSelectView('agent_intake')}
@@ -199,6 +212,15 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <Camera className="w-4 h-4" />
           <span>Agent</span>
+        </button>
+        <button
+          onClick={() => onSelectView('owner_portfolio')}
+          className={`flex flex-col items-center gap-1 text-[9px] font-black uppercase tracking-[0.2em] ${
+            activeView === 'owner_portfolio' ? 'text-emerald-400' : 'text-zinc-400'
+          }`}
+        >
+          <Building2 className="w-4 h-4" />
+          <span>Owners</span>
         </button>
         <button
           onClick={() => onSelectView('admin_crm')}

@@ -288,6 +288,11 @@ export const AdminCrm: React.FC<AdminCrmProps> = ({
                           Field Agent Note: "{prop.intake_notes}"
                         </p>
                       )}
+                      {prop.owner && (
+                        <p className="text-[10px] text-emerald-400 font-mono uppercase tracking-wider">
+                          Owner account: {prop.owner.name} • {prop.owner.accountStatus}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -499,7 +504,7 @@ export const AdminCrm: React.FC<AdminCrmProps> = ({
                         {lead.status.replace('_', ' ')}
                       </span>
                       <span className="px-2 py-0.5 text-[9px] font-mono uppercase bg-[#0A0A0A] border border-white/10 text-zinc-400">
-                        {lead.inquiry_type.replace('_', ' ')}
+                        {lead.intent} • {lead.inquiry_type.replace('_', ' ')}
                       </span>
                       <span className="text-xs text-zinc-400">
                         Target: <strong className="text-white uppercase font-bold">{lead.property_title || 'General Portfolio'}</strong>
