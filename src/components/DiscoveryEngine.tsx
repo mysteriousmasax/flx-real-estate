@@ -136,38 +136,33 @@ export const DiscoveryEngine: React.FC<DiscoveryEngineProps> = ({
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-6 space-y-6">
-      {/* Hero / Filter Controls Bar */}
-      <div className="bg-black p-5 border border-white/10 shadow-2xl">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-8 space-y-6">
+      <div className="rounded-[28px] border border-white/10 bg-[#0e1318]/90 p-4 sm:p-5 shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur-sm">
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
-          
-          {/* Search Input */}
           <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
             <input
               type="text"
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
               placeholder="SEARCH TANZANIA ESTATES (MASAKI, ZANZIBAR, ARUSHA, SERENGETI), FINISHES..."
-              className="w-full pl-10 pr-4 py-3 bg-[#0A0A0A] border border-white/10 text-xs text-white placeholder-zinc-500 uppercase tracking-wider font-semibold focus:outline-none focus:border-red-600 transition-colors"
+              className="w-full pl-11 pr-11 py-3.5 rounded-2xl bg-[#0a0d12] border border-white/10 text-xs text-white placeholder-zinc-500 uppercase tracking-[0.16em] font-semibold focus:outline-none focus:border-red-500/60 transition-colors shadow-inner shadow-black/10"
             />
             {filters.search && (
               <button
                 onClick={() => setFilters({ ...filters, search: '' })}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
 
-          {/* Quick Filter Selectors */}
           <div className="flex flex-wrap items-center gap-2">
-            {/* City Dropdown */}
             <select
               value={filters.city}
               onChange={(e) => setFilters({ ...filters, city: e.target.value })}
-              className="px-3 py-3 bg-[#0A0A0A] border border-white/10 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-200 focus:outline-none focus:border-red-600"
+              className="px-3 py-3.5 rounded-xl bg-[#0a0d12] border border-white/10 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-200 focus:outline-none focus:border-red-500/60"
             >
               {availableCities.map((city) => (
                 <option key={city} value={city} className="bg-black text-white">
@@ -176,37 +171,34 @@ export const DiscoveryEngine: React.FC<DiscoveryEngineProps> = ({
               ))}
             </select>
 
-            {/* Sort Dropdown */}
             <select
               value={filters.sort_by}
               onChange={(e) => setFilters({ ...filters, sort_by: e.target.value as any })}
-              className="px-3 py-3 bg-[#0A0A0A] border border-white/10 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-200 focus:outline-none focus:border-red-600"
+              className="px-3 py-3.5 rounded-xl bg-[#0a0d12] border border-white/10 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-200 focus:outline-none focus:border-red-500/60"
             >
-              <option value="featured" className="bg-black">CURATED // FEATURED</option>
-              <option value="price_desc" className="bg-black">PRICE: HIGH TO LOW</option>
-              <option value="price_asc" className="bg-black">PRICE: LOW TO HIGH</option>
-              <option value="cap_rate_desc" className="bg-black">HIGHEST YIELD (ROI)</option>
-              <option value="newest" className="bg-black">NEWEST LISTINGS</option>
+              <option value="featured" className="bg-black">Curated // Featured</option>
+              <option value="price_desc" className="bg-black">Price: High to Low</option>
+              <option value="price_asc" className="bg-black">Price: Low to High</option>
+              <option value="cap_rate_desc" className="bg-black">Highest Yield (ROI)</option>
+              <option value="newest" className="bg-black">Newest Listings</option>
             </select>
 
-            {/* Advanced Filters Toggle */}
             <button
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              className={`flex items-center gap-2 px-4 py-3 text-[10px] font-black uppercase tracking-[0.2em] border transition-all ${
+              className={`flex items-center gap-2 px-4 py-3.5 text-[10px] font-black uppercase tracking-[0.2em] border rounded-xl transition-all ${
                 showAdvancedFilters
-                  ? 'bg-red-600 text-white border-red-600 shadow-[0_0_15px_rgba(220,38,38,0.4)]'
-                  : 'bg-[#0A0A0A] border-white/10 text-zinc-300 hover:text-white hover:border-zinc-500'
+                  ? 'bg-red-600 text-white border-red-600 shadow-[0_12px_24px_rgba(220,38,38,0.3)]'
+                  : 'bg-[#0a0d12] border-white/10 text-zinc-300 hover:text-white hover:border-white/20'
               }`}
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
-              <span>FILTERS</span>
+              <span>Filters</span>
             </button>
 
-            {/* Layout View Mode Switcher */}
-            <div className="hidden sm:flex items-center bg-[#0A0A0A] p-1 border border-white/10">
+            <div className="hidden sm:flex items-center bg-[#0a0d12] border border-white/10 rounded-xl p-1">
               <button
                 onClick={() => setLayoutMode('split')}
-                className={`p-2 text-xs transition-colors ${
+                className={`p-2 rounded-lg transition-colors ${
                   layoutMode === 'split' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-white'
                 }`}
                 title="Split Map & Feed"
@@ -215,7 +207,7 @@ export const DiscoveryEngine: React.FC<DiscoveryEngineProps> = ({
               </button>
               <button
                 onClick={() => setLayoutMode('map_only')}
-                className={`p-2 text-xs transition-colors ${
+                className={`p-2 rounded-lg transition-colors ${
                   layoutMode === 'map_only' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-white'
                 }`}
                 title="Interactive Map Only"
@@ -224,7 +216,7 @@ export const DiscoveryEngine: React.FC<DiscoveryEngineProps> = ({
               </button>
               <button
                 onClick={() => setLayoutMode('feed_only')}
-                className={`p-2 text-xs transition-colors ${
+                className={`p-2 rounded-lg transition-colors ${
                   layoutMode === 'feed_only' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-white'
                 }`}
                 title="Cinematic Feed Grid Only"
@@ -235,10 +227,8 @@ export const DiscoveryEngine: React.FC<DiscoveryEngineProps> = ({
           </div>
         </div>
 
-        {/* Expandable Advanced Filter Panel */}
         {showAdvancedFilters && (
           <div className="mt-5 pt-5 border-t border-white/10 grid grid-cols-1 sm:grid-cols-3 gap-6 animate-in slide-in-from-top-2 duration-200">
-            {/* Minimum Bedrooms */}
             <div>
               <label className="text-[9px] uppercase tracking-[0.25em] font-black text-zinc-400 block mb-2">
                 Minimum Bedrooms
@@ -248,10 +238,10 @@ export const DiscoveryEngine: React.FC<DiscoveryEngineProps> = ({
                   <button
                     key={num}
                     onClick={() => setFilters({ ...filters, min_beds: num })}
-                    className={`flex-1 py-2 text-xs font-black tracking-wider uppercase transition-colors border ${
+                    className={`flex-1 py-2 text-xs font-black tracking-wider uppercase transition-colors border rounded-lg ${
                       filters.min_beds === num
                         ? 'bg-red-600 text-white border-red-600'
-                        : 'bg-[#0A0A0A] text-zinc-400 border-white/10 hover:text-white'
+                        : 'bg-[#0a0d12] text-zinc-400 border-white/10 hover:text-white'
                     }`}
                   >
                     {num === 0 ? 'Any' : `${num}+`}
@@ -260,7 +250,6 @@ export const DiscoveryEngine: React.FC<DiscoveryEngineProps> = ({
               </div>
             </div>
 
-            {/* Minimum Cap Rate (for investors) */}
             <div>
               <label className="text-[9px] uppercase tracking-[0.25em] font-black text-zinc-400 block mb-2">
                 Min. Cap Rate (Target Yield %)
@@ -270,10 +259,10 @@ export const DiscoveryEngine: React.FC<DiscoveryEngineProps> = ({
                   <button
                     key={rate}
                     onClick={() => setFilters({ ...filters, min_cap_rate: rate })}
-                    className={`flex-1 py-2 text-xs font-black tracking-wider uppercase transition-colors border ${
+                    className={`flex-1 py-2 text-xs font-black tracking-wider uppercase transition-colors border rounded-lg ${
                       filters.min_cap_rate === rate
                         ? 'bg-emerald-600 text-white border-emerald-600'
-                        : 'bg-[#0A0A0A] text-zinc-400 border-white/10 hover:text-white'
+                        : 'bg-[#0a0d12] text-zinc-400 border-white/10 hover:text-white'
                     }`}
                   >
                     {rate === 0 ? 'Any' : `${rate}%+`}
@@ -282,11 +271,10 @@ export const DiscoveryEngine: React.FC<DiscoveryEngineProps> = ({
               </div>
             </div>
 
-            {/* Reset Action */}
             <div className="flex items-end">
               <button
                 onClick={resetFilters}
-                className="w-full py-2.5 px-4 bg-[#0A0A0A] hover:bg-zinc-900 border border-white/10 text-[10px] font-black uppercase tracking-[0.25em] text-zinc-300 hover:text-red-500 transition-colors"
+                className="w-full py-2.5 px-4 bg-[#0a0d12] hover:bg-zinc-900 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-[0.25em] text-zinc-300 hover:text-red-500 transition-colors"
               >
                 Reset All Filters
               </button>
@@ -295,25 +283,23 @@ export const DiscoveryEngine: React.FC<DiscoveryEngineProps> = ({
         )}
       </div>
 
-      {/* Results Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
         <div className="flex items-center gap-4">
-          <h2 className="font-headline text-2xl sm:text-3xl font-black italic tracking-tighter text-white">
+          <h2 className="font-headline text-2xl sm:text-4xl font-black italic tracking-[-0.05em] text-white">
             {filteredProperties.length} AVAILABLE ESTATES
           </h2>
           {selectedType !== 'All' && (
-            <span className="px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.25em] bg-red-950 border border-red-600 text-red-300">
-              {selectedType} ASSETS ONLY
+            <span className="px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.25em] bg-red-950 border border-red-600 text-red-300 rounded-full">
+              {selectedType} Assets Only
             </span>
           )}
         </div>
-        
+
         <div className="flex items-center gap-3">
-          {/* Map Engine Selector */}
-          <div className="flex items-center bg-black/60 p-1 border border-white/10 rounded-xl">
+          <div className="flex items-center bg-[#0a0d12] p-1 border border-white/10 rounded-xl">
             <button
               onClick={() => setMapEngine('google')}
-              className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] rounded-lg transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] rounded-lg transition-all ${
                 mapEngine === 'google'
                   ? 'bg-red-600 text-white shadow'
                   : 'text-zinc-400 hover:text-white'
@@ -324,7 +310,7 @@ export const DiscoveryEngine: React.FC<DiscoveryEngineProps> = ({
             </button>
             <button
               onClick={() => setMapEngine('satellite')}
-              className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] rounded-lg transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] rounded-lg transition-all ${
                 mapEngine === 'satellite'
                   ? 'bg-zinc-800 text-white shadow'
                   : 'text-zinc-400 hover:text-white'
@@ -336,7 +322,7 @@ export const DiscoveryEngine: React.FC<DiscoveryEngineProps> = ({
 
           <div className="hidden sm:flex items-center gap-2 text-[9px] uppercase tracking-[0.25em] font-black text-zinc-500 font-mono">
             <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />
-            LIVE TELEMETRY
+            Live Telemetry
           </div>
         </div>
       </div>

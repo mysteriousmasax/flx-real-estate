@@ -65,14 +65,13 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={() => onSelect(property)}
-      className={`group relative overflow-hidden transition-all duration-300 cursor-pointer bg-black ${
+      className={`group relative overflow-hidden transition-all duration-300 cursor-pointer rounded-[24px] bg-[#0d1117] border ${
         isSelected
-          ? 'border-2 border-red-600 shadow-[0_0_40px_rgba(220,38,38,0.35)]'
-          : 'border border-white/10 hover:border-red-600/50'
+          ? 'border-red-600 shadow-[0_20px_50px_rgba(220,38,38,0.24)]'
+          : 'border-white/10 hover:border-white/20 shadow-[0_18px_45px_rgba(0,0,0,0.18)]'
       }`}
     >
-      {/* Media Container: Autoplay Video on hover, Thumbnail as backdrop */}
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-black">
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-black rounded-t-[24px]">
         {/* Poster Image */}
         <img
           src={property.thumbnail_url}
@@ -159,7 +158,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
       </div>
 
       {/* Content Area */}
-      <div className="p-5 flex flex-col justify-between space-y-4">
+      <div className="p-5 flex flex-col justify-between space-y-4 bg-gradient-to-b from-[#0d1117] to-[#0a0d12] rounded-b-[24px]">
         {/* Title & Asking Price */}
         <div>
           <div className="flex items-center gap-2 mb-2">
@@ -246,7 +245,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
               e.stopPropagation();
               onOpenDetails(property);
             }}
-            className="bg-gradient-to-r from-red-700 to-red-900 hover:brightness-110 px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.25em] text-white flex items-center gap-2 border border-red-600/50 shadow-md transition-all"
+            className="bg-gradient-to-r from-red-600 to-red-700 hover:brightness-110 px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.22em] text-white flex items-center gap-2 border border-red-500/60 shadow-[0_10px_24px_rgba(220,38,38,0.28)] transition-all rounded-xl"
           >
             <span>Inspect Tour</span>
             <Maximize2 className="w-3 h-3" />

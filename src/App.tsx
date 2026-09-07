@@ -184,8 +184,8 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col font-sans selection:bg-red-600 selection:text-white relative">
       {/* Massive Ambient Background Typography Watermark */}
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 select-none pointer-events-none opacity-[0.02] z-0">
-        <h1 className="font-headline text-[250px] sm:text-[380px] lg:text-[520px] font-black italic leading-none tracking-tighter text-white">
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 select-none pointer-events-none opacity-[0.025] z-0">
+        <h1 className="font-headline text-[220px] sm:text-[330px] lg:text-[470px] font-black italic leading-none tracking-[-0.08em] text-white/80">
           FLX
         </h1>
       </div>
