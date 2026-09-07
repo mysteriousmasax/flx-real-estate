@@ -31,3 +31,11 @@ These optional build secrets enable the corresponding integrations in production
 
 - `VITE_GOOGLE_CLIENT_ID`
 - `VITE_GOOGLE_MAPS_API_KEY`
+
+The `cloud-run-deploy.yml` workflow also deploys every push to `main` to the existing Cloud Run service in `europe-west2`. Configure these GitHub Actions secrets for the `run.app` URL:
+
+- `GCP_PROJECT_ID`: the Google Cloud project ID that owns the public Cloud Run service.
+- `GCP_SERVICE_ACCOUNT_KEY`: service-account JSON with Cloud Run Admin, Service Account User, and Cloud Build permissions.
+- `VITE_GOOGLE_CLIENT_ID` and `VITE_GOOGLE_MAPS_API_KEY`: optional build-time integration keys.
+
+The service account must be allowed to deploy the existing service `ais-dev-lhvhtlrgaevi3i4gdaxmvx` in `europe-west2`. If the Cloud Run service has a different name, update `CLOUD_RUN_SERVICE` in the workflow.
