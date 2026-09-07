@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Property, PropertyType, AgentInfo } from '../types';
-import { TEAM_AGENTS } from '../data/mockProperties';
 import { IntakeLocationPicker } from './IntakeLocationPicker';
 import { findNearestTanzaniaStreet } from '../data/tanzaniaLocations';
+import { storage } from '../services/firebase';
+import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
 import { useAuth } from '../context/AuthContext';
 import { 
   Camera, 
@@ -69,7 +70,6 @@ export const AgentIntakePortal: React.FC<AgentIntakePortalProps> = ({
   const [capRate, setCapRate] = useState<number>(8.8);
   const [monthlyRent, setMonthlyRent] = useState<number>(28000);
   const [description, setDescription] = useState<string>('');
-  const [selectedAgentId, setSelectedAgentId] = useState<string>(TEAM_AGENTS[0].id);
   const [intakeNotes, setIntakeNotes] = useState<string>('Captured onsite via mobile drone gimbal rig in Dar es Salaam. Verified Tanzanian title deed.');
   const [luxuryFinishes, setLuxuryFinishes] = useState<string>('Indian Ocean View, Mvule Hardwood, Crestron Automation, Standby Generator, Swimming Pool');
 
@@ -141,55 +141,45 @@ export const AgentIntakePortal: React.FC<AgentIntakePortalProps> = ({
     const file = e.target.files?.[0];
     if (file) {
       setVideoFile(file);
-      const url = URL.createObjectURL(file);
-      setVideoPreviewUrl(url);
-      simulateMuxTranscode();
-    } else {
-      // Default sample video if user cancels
-      useDefaultSampleTour();
+      void uploadVideo(file);
     }
   };
 
-  const useDefaultSampleTour = () => {
-    setVideoPreviewUrl('https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4');
-    simulateMuxTranscode();
-  };
-
-  const simulateMuxTranscode = () => {
+  const uploadVideo = async (file: File) => {
+    if (!user) {
+      openAuthModal();
+      return;
+    }
     setTranscodingState('uploading');
-    setUploadProgress(15);
-
-    const interval = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (prev >= 95) {
-          clearInterval(interval);
-          setTranscodingState('transcoding');
-          setTimeout(() => {
-            setTranscodingState('ready');
-          }, 1200);
-          return 100;
-        }
-        return prev + 25;
-      });
-    }, 250);
+    const uploadTask = uploadBytesResumable(ref(storage, `properties/drafts/${user.id}/${Date.now()}-${file.name}`), file);
+    uploadTask.on('state_changed',
+      (snapshot) => setUploadProgress(Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)),
+      () => setTranscodingState('idle'),
+      async () => {
+        setVideoPreviewUrl(await getDownloadURL(uploadTask.snapshot.ref));
+        setTranscodingState('ready');
+      },
+    );
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      openAuthModal();
+      return;
+    }
+    if (!videoPreviewUrl || transcodingState !== 'ready') return;
     setIsSubmitting(true);
 
-    const baseAgent = TEAM_AGENTS.find((a) => a.id === selectedAgentId) || TEAM_AGENTS[0];
-    const agent: AgentInfo = user
-      ? {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          phone: baseAgent.phone,
-          license: 'TZ-BRELA-GOOG-2024',
-          role: 'Verified Google Intake Agent',
-          avatar: user.picture || baseAgent.avatar,
-        }
-      : baseAgent;
+    const agent: AgentInfo = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phone: '+255 700 000 000',
+      license: 'PENDING_VERIFICATION',
+      role: 'Field Agent',
+      avatar: user.picture || '',
+    };
     const propertyId = `prop-flx-${Date.now()}`;
 
     const newProperty: Property = {
@@ -199,7 +189,7 @@ export const AgentIntakePortal: React.FC<AgentIntakePortalProps> = ({
       property_type: propertyType,
       status: 'Pending', // Pushed into Admin approval queue
       price: Number(price),
-      video_url: videoPreviewUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+      video_url: videoPreviewUrl,
       video_resolution: '4K MUX CDN',
       thumbnail_url: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80',
       images: [
@@ -407,11 +397,11 @@ export const AgentIntakePortal: React.FC<AgentIntakePortalProps> = ({
               />
             </div>
 
-            {/* 2. VIDEO CAPTURE & MUX TRANSCODING ENGINE */}
+            {/* 2. VIDEO CAPTURE & STORAGE UPLOAD */}
             <div className="p-4 rounded-xl bg-[#0f1115] border border-white/10">
               <label className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2 mb-3">
                 <Video className="w-4 h-4 text-red-500" />
-                <span>Cinematic Video Tour (Mux Video CDN)</span>
+                <span>Cinematic Video Tour (Firebase Storage)</span>
               </label>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -431,20 +421,13 @@ export const AgentIntakePortal: React.FC<AgentIntakePortalProps> = ({
                     />
                   </label>
 
-                  <button
-                    type="button"
-                    onClick={useDefaultSampleTour}
-                    className="mt-2 text-[10px] text-neutral-400 hover:text-red-400 underline"
-                  >
-                    Or load verified 4K sample estate tour
-                  </button>
                 </div>
 
                 {/* Transcoding Progress & Preview */}
                 <div className="flex flex-col justify-between p-4 rounded-xl bg-black/60 border border-white/5">
                   <div>
                     <div className="flex items-center justify-between text-xs mb-1">
-                      <span className="text-neutral-300 font-medium">Mux Ingestion Pipeline:</span>
+                      <span className="text-neutral-300 font-medium">Secure upload pipeline:</span>
                       <span className={`font-mono uppercase text-[10px] font-bold ${
                         transcodingState === 'ready' ? 'text-emerald-400' : 'text-red-400'
                       }`}>
@@ -656,20 +639,13 @@ export const AgentIntakePortal: React.FC<AgentIntakePortalProps> = ({
                 />
               </div>
 
-              {/* Listing Agent Selector */}
+              {/* Authenticated agent identity */}
               <div>
-                <label className="text-xs text-neutral-400 block mb-1">Assigned Field Agent</label>
-                <select
-                  value={selectedAgentId}
-                  onChange={(e) => setSelectedAgentId(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-[#0c0d10] border border-white/10 text-xs text-white focus:border-red-500 focus:outline-none"
-                >
-                  {TEAM_AGENTS.map((agent) => (
-                    <option key={agent.id} value={agent.id} className="bg-[#14161a]">
-                      {agent.name} — {agent.role} ({agent.license})
-                    </option>
-                  ))}
-                </select>
+                <label className="text-xs text-neutral-400 block mb-1">Submitting Field Agent</label>
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-[#0c0d10] border border-white/10 text-xs text-white">
+                  {user?.picture ? <img src={user.picture} alt={user.name} className="w-8 h-8 rounded-full object-cover border border-red-500" /> : <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center font-bold">{user?.name?.charAt(0) || '?'}</div>}
+                  <div><strong className="block">{user?.name || 'Sign in required'}</strong><span className="text-[10px] text-zinc-500">{user?.email || 'Authenticate to submit a listing'}</span></div>
+                </div>
               </div>
             </div>
 

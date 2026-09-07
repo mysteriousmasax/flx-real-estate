@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Property, Lead, ActiveAppView, PropertyType, ApprovalStatus, LeadStatus, OwnerInfo } from './types';
-import { INITIAL_PROPERTIES, INITIAL_LEADS } from './data/mockProperties';
+import { Property, Lead, ActiveAppView, PropertyType, ApprovalStatus, LeadStatus } from './types';
 import { Header } from './components/Header';
 import { DiscoveryEngine } from './components/DiscoveryEngine';
 import { AgentIntakePortal } from './components/AgentIntakePortal';
@@ -15,6 +14,8 @@ import { GoogleWorkspaceModal } from './components/GoogleWorkspaceModal';
 import { FlxLogo } from './components/FlxLogo';
 import { useAuth } from './context/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { collection, doc, onSnapshot, setDoc, addDoc, query, where } from 'firebase/firestore';
+import { db } from './services/firebase';
 import { Compass, Camera, ShieldCheck, Heart, Sparkles, MapPin, CheckCircle2 } from 'lucide-react';
 
 function getHomeView(role?: string): ActiveAppView {
@@ -58,32 +59,9 @@ export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
   // Initialize state with local storage fallback
-  const [properties, setProperties] = useState<Property[]>(() => {
-    const saved = localStorage.getItem('flx_properties');
-    if (saved) {
-      try {
-        return (JSON.parse(saved) as Property[]).map((property) => ({
-          ...property,
-          owner: property.owner || createOwnerRecord(property),
-        }));
-      } catch (e) {
-        console.error('Failed parsing properties:', e);
-      }
-    }
-    return INITIAL_PROPERTIES.map((property) => ({ ...property, owner: createOwnerRecord(property) }));
-  });
+  const [properties, setProperties] = useState<Property[]>([]);
 
-  const [leads, setLeads] = useState<Lead[]>(() => {
-    const saved = localStorage.getItem('flx_leads');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error('Failed parsing leads:', e);
-      }
-    }
-    return INITIAL_LEADS;
-  });
+  const [leads, setLeads] = useState<Lead[]>([]);
 
   const [savedIds, setSavedIds] = useState<string[]>(() => {
     const saved = localStorage.getItem('flx_saved_ids');
@@ -94,7 +72,7 @@ export default function App() {
         console.error('Failed parsing saved ids:', e);
       }
     }
-    return ['prop-flx-001', 'prop-flx-002'];
+    return [];
   });
 
   const [activeView, setActiveView] = useState<ActiveAppView>(() => getViewFromPath(window.location.pathname));
@@ -129,18 +107,26 @@ export default function App() {
     navigate(getPathForView(view, user?.role));
   };
 
-  // Sync to localStorage
   useEffect(() => {
-    localStorage.setItem('flx_properties', JSON.stringify(properties));
-  }, [properties]);
+    const propertiesQuery = user ? collection(db, 'properties') : query(collection(db, 'properties'), where('status', '==', 'Approved'));
+    return onSnapshot(propertiesQuery, (snapshot) => {
+      setProperties(snapshot.docs.map((item) => ({ ...item.data(), id: item.id } as Property)));
+    });
+  }, [user]);
 
   useEffect(() => {
-    localStorage.setItem('flx_leads', JSON.stringify(leads));
-  }, [leads]);
+    if (!user) {
+      setLeads([]);
+      return;
+    }
+    return onSnapshot(collection(db, 'leads'), (snapshot) => {
+      setLeads(snapshot.docs.map((item) => ({ ...item.data(), id: item.id } as Lead)));
+    });
+  }, [user]);
 
   useEffect(() => {
-    localStorage.setItem('flx_saved_ids', JSON.stringify(savedIds));
-  }, [savedIds]);
+    if (user) localStorage.setItem(`flx_saved_ids_${user.id}`, JSON.stringify(savedIds));
+  }, [savedIds, user]);
 
   // Deep linking: Automatically open Property Detail Modal when scanned via QR code (?property=id or #property=id)
   useEffect(() => {
@@ -201,17 +187,22 @@ export default function App() {
 
   // Property Submission from Agent Intake
   const handlePropertySubmit = (newProp: Property) => {
-    setProperties((prev) => [newProp, ...prev]);
+    if (!user) {
+      showToast('Sign in with Google before submitting a property.');
+      return;
+    }
+    void setDoc(doc(db, 'properties', newProp.id), newProp);
     showToast(`New Listing "${newProp.title}" Geotagged & submitted to Admin Queue.`);
   };
 
   // Approval status change from Admin CRM
   const handleUpdatePropertyStatus = (propertyId: string, status: ApprovalStatus) => {
-    setProperties((prev) =>
-      prev.map((p) => (p.id === propertyId
-        ? { ...p, status, owner: p.owner ? { ...p.owner, accountStatus: status === 'Approved' ? 'Active' : p.owner.accountStatus } : p.owner }
-        : p))
-    );
+    const property = properties.find((item) => item.id === propertyId);
+    if (property) void setDoc(doc(db, 'properties', propertyId), {
+      ...property,
+      status,
+      owner: property.owner ? { ...property.owner, accountStatus: status === 'Approved' ? 'Active' : property.owner.accountStatus } : property.owner,
+    });
     showToast(`Listing status updated to ${status}.`);
   };
 
@@ -225,13 +216,18 @@ export default function App() {
 
   // Add new lead from Property Detail form
   const handleAddLead = (leadData: Omit<Lead, 'id' | 'created_at' | 'status'>) => {
+    if (!user) {
+      showToast('Sign in before sending an enquiry.');
+      return;
+    }
     const newLead: Lead = {
       ...leadData,
+      client_id: user.id,
       id: `lead-${Date.now()}`,
       status: 'New',
       created_at: new Date().toISOString(),
     };
-    setLeads((prev) => [newLead, ...prev]);
+    void addDoc(collection(db, 'leads'), newLead);
     showToast('VIP Tour / Investment Request logged. Our partner desk has received your file.');
   };
 
@@ -252,16 +248,6 @@ export default function App() {
   const pendingCount = properties.filter((p) => p.status === 'Pending').length;
   const newLeadsCount = leads.filter((l) => l.status === 'New').length;
   const savedProperties = properties.filter((p) => savedIds.includes(p.id));
-
-  function createOwnerRecord(property: Property): OwnerInfo {
-    return {
-      id: `owner-${property.id}`,
-      name: `${property.title} Owner`,
-      email: `owner+${property.id}@flxrealestate.com`,
-      phone: '+255 700 000 000',
-      accountStatus: 'Active',
-    };
-  }
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col font-sans selection:bg-red-600 selection:text-white relative">

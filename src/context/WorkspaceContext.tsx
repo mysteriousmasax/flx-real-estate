@@ -113,48 +113,26 @@ const INITIAL_CHAT_MESSAGES: ChatMessage[] = [
 
 export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const [accessToken, setAccessToken] = useState<string | null>(() => {
-    return localStorage.getItem('flx_workspace_token');
-  });
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>(() => {
-    const saved = localStorage.getItem('flx_calendar_events');
-    return saved ? JSON.parse(saved) : INITIAL_EVENTS;
+    return [];
   });
   const [contacts, setContacts] = useState<GoogleContact[]>(() => {
-    const saved = localStorage.getItem('flx_contacts');
-    return saved ? JSON.parse(saved) : INITIAL_CONTACTS;
+    return [];
   });
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => {
-    const saved = localStorage.getItem('flx_chat_messages');
-    return saved ? JSON.parse(saved) : INITIAL_CHAT_MESSAGES;
+    return [];
   });
   const [sentEmails, setSentEmails] = useState<
     { id: string; to: string; subject: string; propertyTitle: string; timestamp: string }[]
   >(() => {
-    const saved = localStorage.getItem('flx_sent_emails');
-    return saved ? JSON.parse(saved) : [];
+    return [];
   });
   const [activeWorkspaceModal, setActiveWorkspaceModal] = useState<
     'calendar' | 'gmail' | 'contacts' | 'chat' | null
   >(null);
 
-  // Sync to localStorage
-  useEffect(() => {
-    localStorage.setItem('flx_calendar_events', JSON.stringify(calendarEvents));
-  }, [calendarEvents]);
-
-  useEffect(() => {
-    localStorage.setItem('flx_contacts', JSON.stringify(contacts));
-  }, [contacts]);
-
-  useEffect(() => {
-    localStorage.setItem('flx_chat_messages', JSON.stringify(chatMessages));
-  }, [chatMessages]);
-
-  useEffect(() => {
-    localStorage.setItem('flx_sent_emails', JSON.stringify(sentEmails));
-  }, [sentEmails]);
 
   // Request OAuth access token via Google Identity Services
   const connectWorkspace = useCallback(async () => {
@@ -171,7 +149,6 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           callback: async (resp: any) => {
             if (resp.access_token) {
               setAccessToken(resp.access_token);
-              localStorage.setItem('flx_workspace_token', resp.access_token);
               // Fetch live Google Contacts
               const contactRes = await fetchGoogleContacts(resp.access_token);
               if (contactRes.success && contactRes.contacts && contactRes.contacts.length > 0) {
@@ -185,11 +162,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return;
       }
 
-      // Prototyping authorization simulation using authenticated user
-      await new Promise((r) => setTimeout(r, 600));
-      const demoToken = `flx-workspace-token-${Date.now()}`;
-      setAccessToken(demoToken);
-      localStorage.setItem('flx_workspace_token', demoToken);
+      throw new Error('Google Workspace credentials are not configured. Set VITE_GOOGLE_CLIENT_ID and enable the Workspace OAuth client.');
     } catch (e) {
       console.error('Workspace OAuth error:', e);
     } finally {
@@ -199,7 +172,6 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const disconnectWorkspace = useCallback(() => {
     setAccessToken(null);
-    localStorage.removeItem('flx_workspace_token');
   }, []);
 
   // Google Calendar Tour Scheduler

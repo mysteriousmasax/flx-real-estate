@@ -50,3 +50,15 @@ The application uses role-aware browser routes so each user enters a focused wor
 - `/owner/portfolio` — owner property account ledger
 - `/admin/dashboard` — listing approval and lead operations
 - `/property/:id` — shareable property detail view
+
+## Firebase production setup
+
+The application now reads properties and enquiries from Firestore and uses Firebase Authentication for Google sign-in. Deploy the included rules before enabling real users:
+
+```bash
+firebase login
+firebase use pragmatic-nucleus-1ms1d
+firebase deploy --only firestore:rules,storage
+```
+
+In Firebase Console, enable Google under Authentication → Sign-in method. The first signed-in Admin profile must be granted the `Admin` role in the `users/{uid}` Firestore document. No sample properties or sample leads are loaded by the application; an authenticated agent must create the first listing.

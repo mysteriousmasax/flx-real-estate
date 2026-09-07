@@ -80,6 +80,8 @@ export type LeadIntent = 'Buy' | 'Rent';
 export interface Lead {
   id: string;
   property_id?: string;
+  client_id?: string;
+  assigned_agent_id?: string;
   property_title?: string;
   client_name: string;
   client_email: string;

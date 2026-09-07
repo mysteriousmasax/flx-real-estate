@@ -1,5 +1,8 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { AuthUser } from '../types';
+import { auth, googleProvider, db } from '../services/firebase';
+import { onAuthStateChanged, signInWithPopup, signOut as firebaseSignOut } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -33,86 +36,31 @@ function parseJwt(token: string) {
 }
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<AuthUser | null>(() => {
-    try {
-      const stored = localStorage.getItem('flx_auth_user');
-      if (stored) {
-        return JSON.parse(stored);
-      }
-    } catch (e) {
-      console.warn('Unable to read user from localStorage', e);
-    }
-    return null;
-  });
+  const [user, setUser] = useState<AuthUser | null>(null);
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
 
-  // Sync to localStorage
   useEffect(() => {
-    try {
-      if (user) {
-        localStorage.setItem('flx_auth_user', JSON.stringify(user));
-      } else {
-        localStorage.removeItem('flx_auth_user');
+    return onAuthStateChanged(auth, async (firebaseUser) => {
+      if (!firebaseUser) {
+        setUser(null);
+        return;
       }
-    } catch (e) {
-      console.warn('Unable to persist user to localStorage', e);
-    }
-  }, [user]);
-
-  // Load Google Identity Services script
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const existingScript = document.getElementById('google-gsi-client');
-    if (!existingScript) {
-      const script = document.createElement('script');
-      script.id = 'google-gsi-client';
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.async = true;
-      script.defer = true;
-      script.onload = () => {
-        initGsi();
-      };
-      document.body.appendChild(script);
-    } else {
-      initGsi();
-    }
-
-    function initGsi() {
-      const google = (window as any).google;
-      const clientId = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID;
-      if (google?.accounts?.id && clientId) {
-        try {
-          google.accounts.id.initialize({
-            client_id: clientId,
-            callback: (response: any) => {
-              if (response?.credential) {
-                const payload = parseJwt(response.credential);
-                if (payload) {
-                  const googleUser: AuthUser = {
-                    id: payload.sub || `google-${Date.now()}`,
-                    name: payload.name || payload.email?.split('@')[0] || 'Google User',
-                    email: payload.email || '',
-                    picture: payload.picture,
-                    role: 'Agent',
-                    isVerified: true,
-                    provider: 'google',
-                    lastLogin: new Date().toISOString(),
-                  };
-                  setUser(googleUser);
-                  setIsAuthModalOpen(false);
-                }
-              }
-            },
-            auto_select: false,
-          });
-        } catch (err) {
-          console.warn('Google GSI initialization notice:', err);
-        }
-      }
-    }
+      const profileRef = doc(db, 'users', firebaseUser.uid);
+      const profileSnapshot = await getDoc(profileRef);
+      const profile = profileSnapshot.exists() ? profileSnapshot.data() : {};
+      setUser({
+        id: firebaseUser.uid,
+        name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'FLX User',
+        email: firebaseUser.email || '',
+        picture: firebaseUser.photoURL || undefined,
+        role: profile.role || 'Client',
+        isVerified: firebaseUser.emailVerified,
+        provider: 'google',
+        lastLogin: new Date().toISOString(),
+      });
+    });
   }, []);
 
   const openAuthModal = useCallback(() => {
@@ -127,37 +75,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
 
     try {
-      // If native GSI client exists and user didn't specify a manual profile
-      const google = (window as any).google;
-      const clientId = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID;
-
-      if (google?.accounts?.id && clientId && !customAccount) {
-        google.accounts.id.prompt();
-        setIsLoading(false);
-        return;
-      }
-
-      // Instant verified Google Auth (using current user account metadata or custom credentials)
-      const defaultEmail = 'mysteriousmasax@gmail.com';
-      const defaultName = customAccount?.name || 'Masax (Verified FLX Partner)';
-      const avatarUrl =
-        customAccount?.picture ||
-        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&q=80';
-
-      const authenticatedUser: AuthUser = {
-        id: customAccount?.id || `google-user-${Date.now()}`,
-        name: customAccount?.name || defaultName,
-        email: customAccount?.email || defaultEmail,
-        picture: avatarUrl,
-        role: customAccount?.role || 'Agent',
-        isVerified: true,
-        provider: 'google',
-        lastLogin: new Date().toISOString(),
-      };
-
-      // Slight natural simulation delay for auth verification
-      await new Promise((resolve) => setTimeout(resolve, 350));
-      setUser(authenticatedUser);
+      const result = await signInWithPopup(auth, googleProvider);
+      const role = customAccount?.role || 'Client';
+      await setDoc(doc(db, 'users', result.user.uid), {
+        name: result.user.displayName || result.user.email?.split('@')[0] || 'FLX User',
+        email: result.user.email || '',
+        role,
+        updatedAt: new Date().toISOString(),
+      }, { merge: true });
       setIsAuthModalOpen(false);
     } catch (error) {
       console.error('Google Sign-In error:', error);
@@ -167,18 +92,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signOut = useCallback(() => {
-    const google = (window as any).google;
-    if (google?.accounts?.id && user?.email) {
-      try {
-        google.accounts.id.revoke(user.email, () => {
-          console.log('Google session revoked');
-        });
-      } catch (e) {
-        // Safe fallback
-      }
-    }
-    setUser(null);
-  }, [user]);
+    void firebaseSignOut(auth);
+  }, []);
 
   return (
     <AuthContext.Provider
