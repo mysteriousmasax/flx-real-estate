@@ -1,8 +1,21 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { AuthUser } from '../types';
-import { auth, googleProvider, db } from '../services/firebase';
-import { onAuthStateChanged, signInWithPopup, signOut as firebaseSignOut } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+
+interface LoginResult {
+  success: boolean;
+  message: string;
+  role?: AuthUser['role'];
+}
+
+interface SignInInput {
+  email: string;
+  password: string;
+}
+
+interface RegisterInput extends SignInInput {
+  name: string;
+  role: AuthUser['role'];
+}
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -11,56 +24,50 @@ interface AuthContextType {
   isAuthModalOpen: boolean;
   openAuthModal: () => void;
   closeAuthModal: () => void;
-  signInWithGoogle: (customAccount?: Partial<AuthUser>) => Promise<void>;
+  signIn: (input: SignInInput) => Promise<LoginResult>;
+  signUp: (input: RegisterInput) => Promise<LoginResult>;
+  signInWithEmail: (input: SignInInput) => Promise<LoginResult>;
+  registerAccount: (input: RegisterInput) => Promise<LoginResult>;
   signOut: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Helper to decode standard Google ID JWT without external libraries
-function parseJwt(token: string) {
+const STORAGE_KEY = 'flx_local_users';
+const SESSION_KEY = 'flx_local_session';
+
+function safeReadUsers(): Record<string, { name: string; email: string; password: string; role: AuthUser['role']; picture?: string; }> {
   try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    );
-    return JSON.parse(jsonPayload);
-  } catch (e) {
-    console.error('Error decoding Google JWT:', e);
-    return null;
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
   }
 }
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<AuthUser | null>(null);
+function persistUsers(data: Record<string, { name: string; email: string; password: string; role: AuthUser['role']; picture?: string; }>) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
 
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<AuthUser | null>(() => {
+    try {
+      const saved = localStorage.getItem(SESSION_KEY);
+      if (!saved) return null;
+      return JSON.parse(saved);
+    } catch {
+      return null;
+    }
+  });
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
 
-  useEffect(() => {
-    return onAuthStateChanged(auth, async (firebaseUser) => {
-      if (!firebaseUser) {
-        setUser(null);
-        return;
-      }
-      const profileRef = doc(db, 'users', firebaseUser.uid);
-      const profileSnapshot = await getDoc(profileRef);
-      const profile = profileSnapshot.exists() ? profileSnapshot.data() : {};
-      setUser({
-        id: firebaseUser.uid,
-        name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'FLX User',
-        email: firebaseUser.email || '',
-        picture: firebaseUser.photoURL || undefined,
-        role: profile.role || 'Client',
-        isVerified: firebaseUser.emailVerified,
-        provider: 'google',
-        lastLogin: new Date().toISOString(),
-      });
-    });
+  const persistSession = useCallback((nextUser: AuthUser | null) => {
+    if (!nextUser) {
+      localStorage.removeItem(SESSION_KEY);
+      return;
+    }
+    localStorage.setItem(SESSION_KEY, JSON.stringify(nextUser));
   }, []);
 
   const openAuthModal = useCallback(() => {
@@ -71,43 +78,110 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsAuthModalOpen(false);
   }, []);
 
-  const signInWithGoogle = useCallback(async (customAccount?: Partial<AuthUser>) => {
+  const signInWithEmail = useCallback(async ({ email, password }: SignInInput): Promise<LoginResult> => {
     setIsLoading(true);
 
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const role = customAccount?.role || 'Client';
-      await setDoc(doc(db, 'users', result.user.uid), {
-        name: result.user.displayName || result.user.email?.split('@')[0] || 'FLX User',
-        email: result.user.email || '',
-        role,
-        updatedAt: new Date().toISOString(),
-      }, { merge: true });
+      const accounts = safeReadUsers();
+      const normalizedEmail = email.trim().toLowerCase();
+      const account = accounts[normalizedEmail];
+
+      if (!account) {
+        return { success: false, message: 'No account found with that email. Create one first.' };
+      }
+
+      if (account.password !== password) {
+        return { success: false, message: 'Incorrect password. Please try again.' };
+      }
+
+      const resolvedRole = account.role || 'Client';
+
+      const nextUser: AuthUser = {
+        id: `local-${normalizedEmail}`,
+        name: account.name,
+        email: account.email,
+        picture: account.picture,
+        role: resolvedRole,
+        isVerified: true,
+        provider: 'local',
+        lastLogin: new Date().toISOString(),
+      };
+
+      setUser(nextUser);
+      persistSession(nextUser);
       setIsAuthModalOpen(false);
-    } catch (error) {
-      console.error('Google Sign-In error:', error);
+      return { success: true, message: 'Signed in successfully.', role: resolvedRole };
+    } catch {
+      return { success: false, message: 'Unable to sign in. Please try again.' };
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [persistSession]);
+
+  const registerAccount = useCallback(async ({ name, email, password, role }: RegisterInput): Promise<LoginResult> => {
+    setIsLoading(true);
+
+    try {
+      const normalizedEmail = email.trim().toLowerCase();
+      const accounts = safeReadUsers();
+
+      if (accounts[normalizedEmail]) {
+        return { success: false, message: 'An account with this email already exists.' };
+      }
+
+      const nextRole = role || 'Client';
+      const account = {
+        name: name.trim(),
+        email: normalizedEmail,
+        password,
+        role: nextRole,
+      };
+
+      accounts[normalizedEmail] = account;
+      persistUsers(accounts);
+
+      const nextUser: AuthUser = {
+        id: `local-${normalizedEmail}`,
+        name: account.name,
+        email: account.email,
+        role: nextRole,
+        isVerified: true,
+        provider: 'local',
+        lastLogin: new Date().toISOString(),
+      };
+
+      setUser(nextUser);
+      persistSession(nextUser);
+      setIsAuthModalOpen(false);
+      return { success: true, message: 'Account created successfully.', role: nextRole };
+    } catch {
+      return { success: false, message: 'Unable to create account. Please try again.' };
+    } finally {
+      setIsLoading(false);
+    }
+  }, [persistSession]);
 
   const signOut = useCallback(() => {
-    void firebaseSignOut(auth);
-  }, []);
+    setUser(null);
+    persistSession(null);
+  }, [persistSession]);
+
+  const value = useMemo<AuthContextType>(() => ({
+    user,
+    isAuthenticated: !!user,
+    isLoading,
+    isAuthModalOpen,
+    openAuthModal,
+    closeAuthModal,
+    signIn: signInWithEmail,
+    signUp: registerAccount,
+    signInWithEmail,
+    registerAccount,
+    signOut,
+  }), [user, isLoading, isAuthModalOpen, openAuthModal, closeAuthModal, signInWithEmail, registerAccount, signOut]);
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: !!user,
-        isLoading,
-        isAuthModalOpen,
-        openAuthModal,
-        closeAuthModal,
-        signInWithGoogle,
-        signOut,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

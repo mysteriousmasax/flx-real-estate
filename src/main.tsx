@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import App from './App.tsx';
+import App from './FlxOsApp.tsx';
 import { ThemeProvider } from './context/ThemeContext.tsx';
 import { AuthProvider } from './context/AuthContext.tsx';
 import { WorkspaceProvider } from './context/WorkspaceContext.tsx';

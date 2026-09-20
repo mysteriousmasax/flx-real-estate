@@ -65,14 +65,30 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 min-h-20 flex items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-6">
+      <div className="mx-auto flex min-h-20 max-w-7xl flex-col gap-3 px-3 py-3 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-10">
+        <div className="flex min-w-0 items-center justify-between gap-3 lg:justify-start">
           <FlxLogo
             size="sm"
             showTagline={false}
             className="shrink-0"
             onClick={() => onSelectView('discovery')}
           />
+
+          <div className="flex items-center gap-2 lg:hidden">
+            <button
+              onClick={onToggleSavedModal}
+              className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.02] text-zinc-300 transition-colors hover:border-red-500/50 hover:text-red-400"
+              title="Saved Estates"
+            >
+              <Heart className={`h-4 w-4 ${savedCount > 0 ? 'fill-red-500 text-red-500' : ''}`} />
+              {savedCount > 0 && (
+                <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[8px] font-black text-white">
+                  {savedCount}
+                </span>
+              )}
+            </button>
+            <UserProfileMenu />
+          </div>
         </div>
 
         <div className="hidden xl:flex items-center gap-2.5">
@@ -197,7 +213,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           <button
             onClick={onToggleSavedModal}
-            className="relative p-2.5 bg-white/[0.02] border border-white/10 hover:border-red-500/50 text-zinc-300 hover:text-red-400 transition-colors rounded-xl"
+            className="relative hidden p-2.5 bg-white/[0.02] border border-white/10 hover:border-red-500/50 text-zinc-300 hover:text-red-400 transition-colors rounded-xl sm:block"
             title="Saved Estates"
           >
             <Heart className={`w-4 h-4 ${savedCount > 0 ? 'fill-red-500 text-red-500' : ''}`} />
@@ -208,61 +224,10 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </button>
 
-          <UserProfileMenu />
+          <div className="hidden sm:block"><UserProfileMenu /></div>
         </div>
       </div>
 
-      <div className="flex xl:hidden border-t border-white/5 bg-[#0A0A0A] px-4 py-2.5 justify-around">
-        {(userRole === 'Client' || userRole === 'Investor' || !userRole) && (
-        <button
-          onClick={() => onSelectView(userRole === 'Investor' ? 'investor_desk' : 'discovery')}
-          className={`flex flex-col items-center gap-1 text-[9px] font-black uppercase tracking-[0.2em] ${
-            activeView === 'discovery' || activeView === 'investor_desk' ? 'text-red-500' : 'text-zinc-400'
-          }`}
-        >
-          {userRole === 'Investor' ? <BriefcaseBusiness className="w-4 h-4" /> : <Compass className="w-4 h-4" />}
-          <span>{userRole === 'Investor' ? 'Deals' : 'Market'}</span>
-        </button>
-        )}
-        {userRole === 'Client' && (
-        <button onClick={() => onSelectView('client_account')} className={`flex flex-col items-center gap-1 text-[9px] font-black uppercase tracking-[0.2em] ${activeView === 'client_account' ? 'text-red-500' : 'text-zinc-400'}`}>
-          <ClipboardList className="w-4 h-4" /><span>Activity</span>
-        </button>
-        )}
-        {(userRole === 'Agent' || !userRole) && (
-        <button
-          onClick={() => onSelectView('agent_intake')}
-          className={`flex flex-col items-center gap-1 text-[9px] font-black uppercase tracking-[0.2em] ${
-            activeView === 'agent_intake' ? 'text-red-500' : 'text-zinc-400'
-          }`}
-        >
-          <Camera className="w-4 h-4" />
-          <span>Agent</span>
-        </button>
-        )}
-        {(userRole === 'Owner' || !userRole) && (
-        <button
-          onClick={() => onSelectView('owner_portfolio')}
-          className={`flex flex-col items-center gap-1 text-[9px] font-black uppercase tracking-[0.2em] ${
-            activeView === 'owner_portfolio' ? 'text-emerald-400' : 'text-zinc-400'
-          }`}
-        >
-          <Building2 className="w-4 h-4" />
-          <span>Owners</span>
-        </button>
-        )}
-        {(userRole === 'Admin' || !userRole) && (
-        <button
-          onClick={() => onSelectView('admin_crm')}
-          className={`flex flex-col items-center gap-1 text-[9px] font-black uppercase tracking-[0.2em] ${
-            activeView === 'admin_crm' ? 'text-red-500' : 'text-zinc-400'
-          }`}
-        >
-          <ShieldCheck className="w-4 h-4" />
-          <span>Admin</span>
-        </button>
-        )}
-      </div>
     </header>
   );
 };

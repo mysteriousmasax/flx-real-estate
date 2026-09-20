@@ -19,6 +19,20 @@ View your app in AI Studio: https://ai.studio/apps/40c0fc33-86e9-41a3-94d4-1d203
 3. Run the app:
    `npm run dev`
 
+### Demo role accounts
+
+Start the API with `npm run server`, open the client site, click the profile, and use the professional workspace login panel.
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Client | `client@flx.local` | `client123` |
+| Owner | `owner@flx.local` | `owner123` |
+| Agent | `agent@flx.local` | `agent123` |
+| Investor | `investor@flx.local` | `investor123` |
+| Admin | `admin@flx.local` | `admin123` |
+
+Clients stay in the public landing journey. Owner, Agent, Investor, and Admin accounts open their separate desktop workspaces after database-backed login.
+
 ## Automatic deployment
 
 The GitHub Actions workflow in `.github/workflows/firebase-hosting.yml` deploys the `main` branch to Firebase Hosting and creates a temporary preview channel for pull requests.

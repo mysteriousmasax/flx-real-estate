@@ -33,6 +33,12 @@ export const OwnerPortfolio: React.FC<OwnerPortfolioProps> = ({ properties, lead
         <Metric label="Client enquiries" value={activeLeads.length} icon={<MessageSquare className="w-4 h-4" />} accent="text-red-400" />
       </div>
 
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <ToolCard title="Asset board" text="Monitor listings, approvals, and engagement across your portfolio." icon={<Building2 className="w-4 h-4" />} accent="emerald" />
+        <ToolCard title="Leads inbox" text="Track buyer requests and schedule follow-ups from one place." icon={<MessageSquare className="w-4 h-4" />} accent="red" />
+        <ToolCard title="Compliance desk" text="Keep track of verification, listing status, and ownership updates." icon={<ShieldCheck className="w-4 h-4" />} accent="amber" />
+      </section>
+
       <section className="space-y-3">
         <div className="flex items-end justify-between gap-4 border-b border-white/10 pb-3">
           <div><span className="text-[10px] uppercase tracking-[0.3em] text-emerald-400 font-black">Linked inventory</span><h2 className="font-headline text-2xl sm:text-3xl font-black italic uppercase text-white">Asset account ledger</h2></div>
@@ -64,3 +70,4 @@ export const OwnerPortfolio: React.FC<OwnerPortfolioProps> = ({ properties, lead
 const Metric: React.FC<{ label: string; value: number; icon: React.ReactNode; accent?: string }> = ({ label, value, icon, accent = 'text-white' }) => (
   <div className="border border-white/10 bg-black/60 p-4"><div className={`flex items-center justify-between text-[9px] uppercase tracking-[0.2em] font-black ${accent}`}><span>{label}</span>{icon}</div><strong className={`block text-3xl font-mono mt-2 ${accent}`}>{value}</strong></div>
 );
+const ToolCard: React.FC<{ title: string; text: string; icon: React.ReactNode; accent: 'emerald' | 'red' | 'amber' }> = ({ title, text, icon, accent }) => { const map = { emerald: 'border-emerald-500/40 bg-emerald-500/5 text-emerald-300', red: 'border-red-500/40 bg-red-500/5 text-red-300', amber: 'border-amber-500/40 bg-amber-500/5 text-amber-300' }; return (<div className={`rounded-xl border p-4 ${map[accent]}`}><div className="flex items-center justify-between"><span className="text-[9px] font-black uppercase tracking-[0.2em]">Tool</span>{icon}</div><h3 className="mt-3 text-sm font-black uppercase text-white">{title}</h3><p className="mt-2 text-xs text-zinc-300 leading-relaxed">{text}</p></div>); };

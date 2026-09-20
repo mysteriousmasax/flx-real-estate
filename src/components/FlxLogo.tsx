@@ -19,13 +19,13 @@ export const FlxLogo: React.FC<FlxLogoProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`inline-flex flex-col items-center select-none ${onClick ? 'cursor-pointer' : ''} ${className}`}
+      className={`inline-flex min-w-0 flex-col items-center select-none ${onClick ? 'cursor-pointer' : ''} ${className}`}
     >
-      <div className={`flex items-center gap-1.5 transition-transform duration-200 ${scale}`}>
+      <div className={`flex min-w-0 items-center gap-1 transition-transform duration-200 ${scale}`}>
         {/* Render SVG Logo with brushed titanium & ruby metallic chrome */}
         <svg
           viewBox="0 0 420 160"
-          className={size === 'sm' ? 'h-10 w-auto' : size === 'lg' ? 'h-24 w-auto' : size === 'icon' ? 'h-8 w-auto' : 'h-14 w-auto'}
+          className={size === 'sm' ? 'h-8 w-auto sm:h-10' : size === 'lg' ? 'h-20 w-auto sm:h-24' : size === 'icon' ? 'h-8 w-auto' : 'h-11 w-auto sm:h-14'}
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
@@ -151,26 +151,26 @@ export const FlxLogo: React.FC<FlxLogoProps> = ({
         {size !== 'icon' && (
           <div className="flex min-w-0 flex-col justify-center -ml-1">
             <div className="flex items-baseline tracking-widest leading-none">
-              <span className="whitespace-nowrap font-black italic text-transparent bg-clip-text bg-gradient-to-r from-white via-neutral-100 to-neutral-400 text-xl md:text-2xl tracking-[0.25em] drop-shadow-[0_0_15px_rgba(220,38,38,0.3)]">
+              <span className="whitespace-nowrap font-black italic text-transparent bg-clip-text bg-gradient-to-r from-white via-neutral-100 to-neutral-400 text-[0.8rem] tracking-[0.12em] sm:text-xl md:text-2xl sm:tracking-[0.25em] drop-shadow-[0_0_15px_rgba(220,38,38,0.3)]">
                 REAL ESTATE
               </span>
             </div>
 
             {/* Separator Line with Center Ruby Node */}
-            <div className="flex items-center gap-1.5 my-1">
+            <div className="my-1 flex items-center gap-1 sm:gap-1.5">
               <div className="h-[1.5px] flex-1 bg-gradient-to-r from-transparent via-red-600 to-red-500" />
-              <div className="w-1.5 h-1.5 bg-red-600 shadow-[0_0_8px_#dc2626]" />
+              <div className="h-1.5 w-1.5 bg-red-600 shadow-[0_0_8px_#dc2626]" />
               <div className="h-[1.5px] flex-1 bg-gradient-to-l from-transparent via-red-600 to-red-500" />
             </div>
 
             {/* Tagline: FIND • INVEST • LIVE BETTER. */}
             {showTagline && (
-              <div className="flex items-center justify-between text-[8px] md:text-[9.5px] font-black uppercase tracking-[0.3em] text-zinc-400">
-                <span className="text-white hover:text-red-500 transition-colors">FIND</span>
-                <span className="text-red-600 text-[10px] leading-none font-black">•</span>
-                <span className="text-white hover:text-red-500 transition-colors">INVEST</span>
-                <span className="text-red-600 text-[10px] leading-none font-black">•</span>
-                <span className="text-white hover:text-red-500 transition-colors">LIVE BETTER</span>
+              <div className="flex items-center justify-between text-[6.5px] font-black uppercase tracking-[0.16em] text-zinc-400 sm:text-[8px] md:text-[9.5px] md:tracking-[0.3em]">
+                <span className="text-white transition-colors hover:text-red-500">FIND</span>
+                <span className="text-[8px] font-black leading-none text-red-600 sm:text-[10px]">•</span>
+                <span className="text-white transition-colors hover:text-red-500">INVEST</span>
+                <span className="text-[8px] font-black leading-none text-red-600 sm:text-[10px]">•</span>
+                <span className="text-white transition-colors hover:text-red-500">LIVE BETTER</span>
               </div>
             )}
           </div>

@@ -1,20 +1,6 @@
-import React, { useState, useMemo } from 'react';
-import { Property, FilterState, PropertyType, Lead } from '../types';
-import { PropertyCard } from './PropertyCard';
+﻿import React, { useState } from 'react';
+import { Property, PropertyType } from '../types';
 import { InteractiveMap } from './InteractiveMap';
-import { GoogleMapView } from './GoogleMapView';
-import { 
-  Search, 
-  SlidersHorizontal, 
-  Map as MapIcon, 
-  Grid, 
-  Columns, 
-  TrendingUp, 
-  Home, 
-  Sparkles, 
-  X,
-  Filter
-} from 'lucide-react';
 
 interface DiscoveryEngineProps {
   audience?: 'Investor' | 'Client';
@@ -24,7 +10,7 @@ interface DiscoveryEngineProps {
   onOpenDetails: (property: Property) => void;
   selectedType: 'All' | PropertyType;
   onSelectType: (type: 'All' | PropertyType) => void;
-  onAddLead: (lead: Omit<Lead, 'id' | 'created_at' | 'status'>) => void;
+  onAddLead: (lead: Omit<import('../types').Lead, 'id' | 'created_at' | 'status'>) => void;
 }
 
 export const DiscoveryEngine: React.FC<DiscoveryEngineProps> = ({
@@ -37,396 +23,117 @@ export const DiscoveryEngine: React.FC<DiscoveryEngineProps> = ({
   onSelectType,
   onAddLead,
 }) => {
-  // Layout view mode: split, map_only, feed_only
   const [layoutMode, setLayoutMode] = useState<'split' | 'map_only' | 'feed_only'>('split');
-  const hasGoogleMapsKey = Boolean(((import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY as string)?.trim());
-  const [mapEngine, setMapEngine] = useState<'google' | 'satellite'>(hasGoogleMapsKey ? 'google' : 'satellite');
+  const [mapEngine, setMapEngine] = useState<'local' | 'satellite'>('local');
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState<boolean>(false);
-
-  // Filter state
-  const [filters, setFilters] = useState<FilterState>({
-    property_type: 'All',
-    search: '',
-    city: 'All',
-    min_price: 0,
-    max_price: 30000000,
-    min_beds: 0,
-    min_cap_rate: 0,
-    has_video: false,
-    sort_by: 'featured',
-  });
-
-  // Cities list from properties
-  const availableCities = useMemo(() => {
-    const cities = new Set(properties.map((p) => p.location.city));
-    return ['All', ...Array.from(cities)];
-  }, [properties]);
-
-  // Filtered and sorted properties
-  const filteredProperties = useMemo(() => {
-    return properties.filter((prop) => {
-      // Type filter (from global or local)
-      if (selectedType !== 'All' && prop.property_type !== selectedType) {
-        return false;
-      }
-
-      // City filter
-      if (filters.city !== 'All' && prop.location.city !== filters.city) {
-        return false;
-      }
-
-      // Price filter
-      if (prop.price < filters.min_price || prop.price > filters.max_price) {
-        return false;
-      }
-
-      // Bedrooms filter
-      if (filters.min_beds > 0 && prop.metadata.beds < filters.min_beds) {
-        return false;
-      }
-
-      // Cap rate filter
-      if (filters.min_cap_rate > 0) {
-        if (!prop.metadata.cap_rate || prop.metadata.cap_rate < filters.min_cap_rate) {
-          return false;
-        }
-      }
-
-      // Search keyword filter
-      if (filters.search.trim()) {
-        const query = filters.search.toLowerCase();
-        const matchesTitle = prop.title.toLowerCase().includes(query);
-        const matchesAddress = prop.location.address.toLowerCase().includes(query);
-        const matchesCity = prop.location.city.toLowerCase().includes(query);
-        const matchesNeighborhood = prop.location.neighborhood?.toLowerCase().includes(query);
-        const matchesDesc = prop.description.toLowerCase().includes(query);
-
-        if (!matchesTitle && !matchesAddress && !matchesCity && !matchesNeighborhood && !matchesDesc) {
-          return false;
-        }
-      }
-
-      return true;
-    }).sort((a, b) => {
-      if (filters.sort_by === 'price_asc') return a.price - b.price;
-      if (filters.sort_by === 'price_desc') return b.price - a.price;
-      if (filters.sort_by === 'cap_rate_desc') {
-        return (b.metadata.cap_rate || 0) - (a.metadata.cap_rate || 0);
-      }
-      if (filters.sort_by === 'newest') {
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      }
-      // default: featured first
-      return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
-    });
-  }, [properties, selectedType, filters]);
-
-  const resetFilters = () => {
-    setFilters({
-      property_type: 'All',
-      search: '',
-      city: 'All',
-      min_price: 0,
-      max_price: 30000000,
-      min_beds: 0,
-      min_cap_rate: 0,
-      has_video: false,
-      sort_by: 'featured',
-    });
-    onSelectType('All');
-  };
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-8 space-y-6">
       <div className="rounded-[28px] border border-white/10 bg-[#0e1318]/90 p-4 sm:p-5 shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur-sm">
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-            <input
-              type="text"
-              value={filters.search}
-              onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-              placeholder="SEARCH TANZANIA ESTATES (MASAKI, ZANZIBAR, ARUSHA, SERENGETI), FINISHES..."
-              className="w-full pl-11 pr-11 py-3.5 rounded-2xl bg-[#0a0d12] border border-white/10 text-xs text-white placeholder-zinc-500 uppercase tracking-[0.16em] font-semibold focus:outline-none focus:border-red-500/60 transition-colors shadow-inner shadow-black/10"
-            />
-            {filters.search && (
-              <button
-                onClick={() => setFilters({ ...filters, search: '' })}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <select
-              value={filters.city}
-              onChange={(e) => setFilters({ ...filters, city: e.target.value })}
-              className="px-3 py-3.5 rounded-xl bg-[#0a0d12] border border-white/10 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-200 focus:outline-none focus:border-red-500/60"
-            >
-              {availableCities.map((city) => (
-                <option key={city} value={city} className="bg-black text-white">
-                  {city === 'All' ? 'ALL LOCATIONS' : city.toUpperCase()}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={filters.sort_by}
-              onChange={(e) => setFilters({ ...filters, sort_by: e.target.value as any })}
-              className="px-3 py-3.5 rounded-xl bg-[#0a0d12] border border-white/10 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-200 focus:outline-none focus:border-red-500/60"
-            >
-              <option value="featured" className="bg-black">Curated // Featured</option>
-              <option value="price_desc" className="bg-black">Price: High to Low</option>
-              <option value="price_asc" className="bg-black">Price: Low to High</option>
-              <option value="cap_rate_desc" className="bg-black">Highest Yield (ROI)</option>
-              <option value="newest" className="bg-black">Newest Listings</option>
-            </select>
-
-            <button
-              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              className={`flex items-center gap-2 px-4 py-3.5 text-[10px] font-black uppercase tracking-[0.2em] border rounded-xl transition-all ${
-                showAdvancedFilters
-                  ? 'bg-red-600 text-white border-red-600 shadow-[0_12px_24px_rgba(220,38,38,0.3)]'
-                  : 'bg-[#0a0d12] border-white/10 text-zinc-300 hover:text-white hover:border-white/20'
-              }`}
-            >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
-              <span>Filters</span>
-            </button>
-
-            <div className="hidden sm:flex items-center bg-[#0a0d12] border border-white/10 rounded-xl p-1">
-              <button
-                onClick={() => setLayoutMode('split')}
-                className={`p-2 rounded-lg transition-colors ${
-                  layoutMode === 'split' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-white'
-                }`}
-                title="Split Map & Feed"
-              >
-                <Columns className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setLayoutMode('map_only')}
-                className={`p-2 rounded-lg transition-colors ${
-                  layoutMode === 'map_only' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-white'
-                }`}
-                title="Interactive Map Only"
-              >
-                <MapIcon className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setLayoutMode('feed_only')}
-                className={`p-2 rounded-lg transition-colors ${
-                  layoutMode === 'feed_only' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-white'
-                }`}
-                title="Cinematic Feed Grid Only"
-              >
-                <Grid className="w-4 h-4" />
-              </button>
-            </div>
+          <div className="flex flex-1 items-center gap-3 text-white/70">
+            <span className="text-xs font-black uppercase tracking-[0.25em]">Discovery</span>
           </div>
         </div>
-
-        {showAdvancedFilters && (
-          <div className="mt-5 pt-5 border-t border-white/10 grid grid-cols-1 sm:grid-cols-3 gap-6 animate-in slide-in-from-top-2 duration-200">
-            <div>
-              <label className="text-[9px] uppercase tracking-[0.25em] font-black text-zinc-400 block mb-2">
-                Minimum Bedrooms
-              </label>
-              <div className="flex gap-2">
-                {[0, 3, 4, 5, 6].map((num) => (
-                  <button
-                    key={num}
-                    onClick={() => setFilters({ ...filters, min_beds: num })}
-                    className={`flex-1 py-2 text-xs font-black tracking-wider uppercase transition-colors border rounded-lg ${
-                      filters.min_beds === num
-                        ? 'bg-red-600 text-white border-red-600'
-                        : 'bg-[#0a0d12] text-zinc-400 border-white/10 hover:text-white'
-                    }`}
-                  >
-                    {num === 0 ? 'Any' : `${num}+`}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="text-[9px] uppercase tracking-[0.25em] font-black text-zinc-400 block mb-2">
-                Min. Cap Rate (Target Yield %)
-              </label>
-              <div className="flex gap-2">
-                {[0, 6, 8, 10].map((rate) => (
-                  <button
-                    key={rate}
-                    onClick={() => setFilters({ ...filters, min_cap_rate: rate })}
-                    className={`flex-1 py-2 text-xs font-black tracking-wider uppercase transition-colors border rounded-lg ${
-                      filters.min_cap_rate === rate
-                        ? 'bg-emerald-600 text-white border-emerald-600'
-                        : 'bg-[#0a0d12] text-zinc-400 border-white/10 hover:text-white'
-                    }`}
-                  >
-                    {rate === 0 ? 'Any' : `${rate}%+`}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex items-end">
-              <button
-                onClick={resetFilters}
-                className="w-full py-2.5 px-4 bg-[#0a0d12] hover:bg-zinc-900 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-[0.25em] text-zinc-300 hover:text-red-500 transition-colors"
-              >
-                Reset All Filters
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
         <div className="flex items-center gap-4">
           <h2 className="font-headline text-2xl sm:text-4xl font-black italic tracking-[-0.05em] text-white">
-            {audience === 'Investor' ? `${filteredProperties.length} INVESTMENT OPPORTUNITIES` : `${filteredProperties.length} HOMES TO BUY OR RENT`}
+            {audience === 'Investor' ? `${properties.length} INVESTMENT OPPORTUNITIES` : `${properties.length} HOMES TO BUY OR RENT`}
           </h2>
-          {selectedType !== 'All' && (
-            <span className="px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.25em] bg-red-950 border border-red-600 text-red-300 rounded-full">
-              {selectedType} Assets Only
-            </span>
-          )}
         </div>
 
         <div className="flex items-center gap-3">
           <div className="flex items-center bg-[#0a0d12] p-1 border border-white/10 rounded-xl">
             <button
-              onClick={() => setMapEngine('google')}
+              onClick={() => setMapEngine('local')}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] rounded-lg transition-all ${
-                mapEngine === 'google'
-                  ? 'bg-red-600 text-white shadow'
-                  : 'text-zinc-400 hover:text-white'
+                mapEngine === 'local' ? 'bg-red-600 text-white shadow' : 'text-zinc-400 hover:text-white'
               }`}
             >
-              <span className="w-2 h-2 rounded-full bg-blue-400" />
-              Google Maps
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              Local Map
             </button>
             <button
               onClick={() => setMapEngine('satellite')}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] rounded-lg transition-all ${
-                mapEngine === 'satellite'
-                  ? 'bg-zinc-800 text-white shadow'
-                  : 'text-zinc-400 hover:text-white'
+                mapEngine === 'satellite' ? 'bg-zinc-800 text-white shadow' : 'text-zinc-400 hover:text-white'
               }`}
             >
               Satellite Radar
             </button>
           </div>
-
-          <div className="hidden sm:flex items-center gap-2 text-[9px] uppercase tracking-[0.25em] font-black text-zinc-500 font-mono">
-            <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />
-            Live Telemetry
-          </div>
         </div>
       </div>
 
-      {/* Main Content Layout: Split / Map Only / Feed Only */}
-      {layoutMode === 'split' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left Column: Interactive Map (5 cols) */}
-          <div className="lg:col-span-6 sticky top-28 h-[600px]">
-            {mapEngine === 'google' ? (
-              <GoogleMapView
-                properties={filteredProperties}
-                selectedProperty={selectedProperty}
-                onSelectProperty={(prop) => setSelectedProperty(prop)}
-                onOpenDetails={onOpenDetails}
-                activeType={selectedType}
-                className="h-full"
-                onSwitchToSatellite={() => setMapEngine('satellite')}
-              />
-            ) : (
-              <InteractiveMap
-                properties={filteredProperties}
-                selectedProperty={selectedProperty}
-                onSelectProperty={(prop) => setSelectedProperty(prop)}
-                onOpenDetails={onOpenDetails}
-                activeType={selectedType}
-                className="h-full"
-              />
-            )}
-          </div>
-
-          {/* Right Column: Listing Cards Feed (6 cols) */}
-          <div className="lg:col-span-6 space-y-6">
-            {filteredProperties.length === 0 ? (
-              <div className="text-center py-16 p-8 rounded-2xl bg-[#111317] border border-white/10">
-                <Home className="w-12 h-12 text-neutral-600 mx-auto mb-3" />
-                <h4 className="text-base font-bold text-white mb-1">No Estates Match Filter</h4>
-                <p className="text-xs text-neutral-400 mb-4">Try clearing your filters or search keywords.</p>
-                <button
-                  onClick={resetFilters}
-                  className="px-4 py-2 rounded-xl bg-red-600 text-white text-xs font-bold"
-                >
-                  Clear Filters
-                </button>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="lg:col-span-6 sticky top-28 h-[600px]">
+          {mapEngine === 'local' ? (
+            <div className="h-full rounded-2xl border border-white/10 bg-black/30 p-2">
+              <div className="h-full">
+                <div className="h-full rounded-2xl overflow-hidden">
+                  <InteractiveMap
+                    properties={properties}
+                    selectedProperty={selectedProperty}
+                    onSelectProperty={(prop) => setSelectedProperty(prop)}
+                    onOpenDetails={onOpenDetails}
+                    activeType={selectedType}
+                    className="h-full"
+                  />
+                </div>
               </div>
-            ) : (
-              filteredProperties.map((property) => (
-                <PropertyCard
-                  key={property.id}
-                  property={property}
-                  isSelected={selectedProperty?.id === property.id}
-                  isSaved={savedIds.includes(property.id)}
-                  onToggleSave={onToggleSave}
-                  onSelect={(prop) => setSelectedProperty(prop)}
-                  onOpenDetails={onOpenDetails}
-                />
-              ))
-            )}
-          </div>
-        </div>
-      )}
-
-      {layoutMode === 'map_only' && (
-        <div className="h-[700px] w-full">
-          {mapEngine === 'google' ? (
-            <GoogleMapView
-              properties={filteredProperties}
-              selectedProperty={selectedProperty}
-              onSelectProperty={(prop) => setSelectedProperty(prop)}
-              onOpenDetails={onOpenDetails}
-              activeType={selectedType}
-              className="h-full"
-              onSwitchToSatellite={() => setMapEngine('satellite')}
-            />
+            </div>
           ) : (
-            <InteractiveMap
-              properties={filteredProperties}
-              selectedProperty={selectedProperty}
-              onSelectProperty={(prop) => setSelectedProperty(prop)}
-              onOpenDetails={onOpenDetails}
-              activeType={selectedType}
-              className="h-full"
-            />
+            <div className="h-full rounded-2xl border border-white/10 bg-black/30 p-2">
+              <div className="h-full rounded-2xl overflow-hidden">
+                <InteractiveMap
+                  properties={properties}
+                  selectedProperty={selectedProperty}
+                  onSelectProperty={(prop) => setSelectedProperty(prop)}
+                  onOpenDetails={onOpenDetails}
+                  activeType={selectedType}
+                  className="h-full"
+                />
+              </div>
+            </div>
           )}
         </div>
-      )}
 
-      {layoutMode === 'feed_only' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProperties.map((property) => (
-            <PropertyCard
-              key={property.id}
-              property={property}
-              isSelected={selectedProperty?.id === property.id}
-              isSaved={savedIds.includes(property.id)}
-              onToggleSave={onToggleSave}
-              onSelect={(prop) => setSelectedProperty(prop)}
-              onOpenDetails={onOpenDetails}
-            />
-          ))}
+        <div className="lg:col-span-6 space-y-6">
+          {properties.length === 0 ? (
+            <div className="text-center py-16 p-8 rounded-2xl bg-[#111317] border border-white/10">
+              <h4 className="text-base font-bold text-white mb-1">No Estates Match Filter</h4>
+            </div>
+          ) : (
+            properties.map((property) => (
+              <div
+                key={property.id}
+                className={`rounded-2xl border p-4 ${selectedProperty?.id === property.id ? 'border-red-500 bg-red-500/5' : 'border-white/10 bg-[#111317]'}`}
+                onClick={() => setSelectedProperty(property)}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">{property.location.city}</p>
+                    <h3 className="mt-1 text-lg font-black text-white">{property.title}</h3>
+                  </div>
+                  <button
+                    onClick={() => onOpenDetails(property)}
+                    className="rounded-xl border border-red-500/40 bg-red-500/10 px-2 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-red-300"
+                  >
+                    Details
+                  </button>
+                </div>
+                <p className="mt-2 text-sm text-zinc-300">{property.description}</p>
+                <div className="mt-3 flex items-center justify-between text-xs text-zinc-300">
+                  <span>{property.property_type}</span>
+                  <span className="font-black text-white">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(property.price)}</span>
+                </div>
+              </div>
+            ))
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };

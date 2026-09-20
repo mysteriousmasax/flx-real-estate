@@ -28,6 +28,29 @@ interface AdminCrmProps {
   onViewProperty: (property: Property) => void;
 }
 
+interface ToolCardProps {
+  title: string;
+  text: string;
+  icon: React.ReactNode;
+  accent: 'amber' | 'emerald' | 'red';
+}
+
+const ToolCard: React.FC<ToolCardProps> = ({ title, text, icon, accent }) => {
+  const accentStyles = {
+    amber: 'border-amber-500/40 bg-amber-500/5 text-amber-200',
+    emerald: 'border-emerald-500/40 bg-emerald-500/5 text-emerald-200',
+    red: 'border-red-500/40 bg-red-500/5 text-red-200',
+  };
+
+  return (
+    <div className={`rounded-2xl border p-4 ${accentStyles[accent]}`}>
+      <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-black/30 text-white">{icon}</div>
+      <h3 className="mb-1 text-base font-black text-white">{title}</h3>
+      <p className="text-sm leading-6 text-zinc-300">{text}</p>
+    </div>
+  );
+};
+
 export const AdminCrm: React.FC<AdminCrmProps> = ({
   properties,
   leads,
@@ -137,6 +160,12 @@ export const AdminCrm: React.FC<AdminCrmProps> = ({
           </span>
         </div>
       </div>
+
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <ToolCard title="Approval board" text="Review new listings and make fast operational decisions for each asset." icon={<Clock className="w-4 h-4" />} accent="amber" />
+        <ToolCard title="Pipeline analytics" text="Track revenue, conversion flows, and regional demand patterns." icon={<BarChart3 className="w-4 h-4" />} accent="emerald" />
+        <ToolCard title="Lead triage" text="Prioritize new buyer and investor requests with a clear follow-up workflow." icon={<Users className="w-4 h-4" />} accent="red" />
+      </section>
 
       {/* Main Tab Navigation */}
       <div className="flex items-center gap-2 border-b border-white/10 pb-4">

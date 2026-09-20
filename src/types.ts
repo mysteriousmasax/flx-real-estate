@@ -116,9 +116,10 @@ export interface AuthUser {
   id: string;
   name: string;
   email: string;
+  password?: string;
   picture?: string;
   role?: 'Agent' | 'Investor' | 'Owner' | 'Admin' | 'Client';
   isVerified?: boolean;
-  provider: 'google';
+  provider: 'local';
   lastLogin?: string;
 }

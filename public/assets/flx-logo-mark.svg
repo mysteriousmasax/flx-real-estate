@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">FLX Real Estate logo</title>
+  <desc id="desc">Circular FLX Real Estate logo</desc>
+  <defs>
+    <linearGradient id="red" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff2b2b"/><stop offset="1" stop-color="#970000"/></linearGradient>
+    <linearGradient id="black" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#393939"/><stop offset="1" stop-color="#050505"/></linearGradient>
+  </defs>
+  <circle cx="256" cy="256" r="247" fill="#fff" stroke="#9f1117" stroke-width="7"/>
+  <g fill="none" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M87 231 119 91h174l-28 39H145l-14 29h111l-25 39H119l-25 83H45z" fill="url(#black)" stroke="#777" stroke-width="4"/>
+    <path d="m310 91-21 69-22 55 80 1 30-39-56-1 25-85z" fill="url(#black)" stroke="#777" stroke-width="4"/>
+    <path d="M274 122c69-38 129-27 172 3l-36 15c-36-15-77-12-116 13z" fill="url(#black)" stroke="#777" stroke-width="4"/>
+    <path d="m322 124 43 58 35-26-43-54zM390 181l55 73 38-25-53-72z" fill="url(#red)" stroke="#640000" stroke-width="4"/>
+    <path d="M66 293c99-68 188 5 284-29 65-23 110-65 150-91l-29 52c-55 48-113 85-177 103-104 29-190-37-271 30z" fill="url(#red)" stroke="#640000" stroke-width="4"/>
+  </g>
+  <text x="76" y="370" fill="url(#red)" font-family="Arial, sans-serif" font-size="38" font-weight="900" letter-spacing="3">REAL ESTATE</text>
+  <path d="M78 384h356" stroke="#b00000" stroke-width="3"/>
+  <text x="124" y="414" fill="#1b1b1b" font-family="Arial, sans-serif" font-size="13" font-weight="800" letter-spacing="2">FIND * INVEST * LIVE BETTER.</text>
+</svg>
