@@ -1,15 +1,10 @@
-name: Deploy to Firebase Hosting
+name: Deploy to Railway
 
 on:
   push:
     branches:
       - main
-  pull_request:
-    types: [opened, synchronize, reopened]
-
-permissions:
-  contents: read
-  pull-requests: write
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
@@ -29,14 +24,6 @@ jobs:
 
       - name: Build application
         run: npm run build
-        env:
-          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
-          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
 
-      - name: Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0.9.0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PRAGMATIC_NUCLEUS_1MS1D }}
-          projectId: pragmatic-nucleus-1ms1d
-          channelId: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || '' }}
+      - name: Deployment note
+        run: echo "Deployment is handled in Railway; no Google-backed environment variables are configured."

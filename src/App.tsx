@@ -197,6 +197,7 @@ function App() {
     });
   };
   const [listings, setListings] = useState<Listing[]>(fallbackListings);
+  const [mapLocations, setMapLocations] = useState<Property[]>([]);
   const [savedIds, setSavedIds] = useState<number[]>([1]);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(fallbackListings[0]);
   const [selectedBed, setSelectedBed] = useState('B');
@@ -304,29 +305,42 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const mapProperties = useMemo<Property[]>(() => listings.map((listing, index) => ({
-    id: String(listing.id),
-    created_at: new Date().toISOString(),
-    title: listing.title,
-    property_type: listing.id === 3 ? 'Invest' : 'Live',
-    status: listing.status === 'New' ? 'Pending' : 'Approved',
-    price: Number(String(listing.price).replace(/[^0-9]/g, '')) || 0,
-    video_url: '',
-    thumbnail_url: listing.image,
-    images: [listing.image],
-    location: {
-      lat: -6.8 + index * 0.08,
-      lng: 39.22 + index * 0.15,
-      address: listing.city,
-      city: listing.city.split('•')[0].trim(),
-      state: 'Tanzania',
-      zip: '14111',
-    },
-    agent: { id: 'flx-demo', name: 'FLX Realty', avatar: '', phone: '+255 712 345 678', email: 'hello@flxrealty.com', license: 'FLX', role: 'Agent' },
-    metadata: { beds: listing.id === 1 ? 2 : 0, baths: listing.id === 1 ? 2 : 0, sqft: listing.id === 3 ? 80 : 2300 },
-    description: listing.verification,
-    featured: listing.id === 1,
-  })), [listings]);
+  const mapProperties = useMemo<Property[]>(() => {
+    const propertyList = mapLocations.length ? mapLocations : listings.map((listing, index) => ({
+      id: String(listing.id),
+      created_at: new Date().toISOString(),
+      title: listing.title,
+      property_type: listing.id === 3 ? 'Invest' : 'Live',
+      status: listing.status === 'New' ? 'Pending' : 'Approved',
+      price: Number(String(listing.price).replace(/[^0-9]/g, '')) || 0,
+      video_url: '',
+      thumbnail_url: listing.image,
+      images: [listing.image],
+      location: {
+        lat: Number((listing as any).lat ?? -6.8 + index * 0.08),
+        lng: Number((listing as any).lng ?? 39.22 + index * 0.15),
+        address: listing.city,
+        city: listing.city.split('•')[0].trim(),
+        state: 'Tanzania',
+        zip: '14111',
+      },
+      agent: { id: 'flx-demo', name: 'FLX Realty', avatar: '', phone: '+255 712 345 678', email: 'hello@flxrealty.com', license: 'FLX', role: 'Agent' },
+      metadata: { beds: listing.id === 1 ? 2 : 0, baths: listing.id === 1 ? 2 : 0, sqft: listing.id === 3 ? 80 : 2300 },
+      description: listing.verification,
+      featured: listing.id === 1,
+    }));
+
+    return propertyList.map((property) => ({
+      ...property,
+      location: {
+        ...property.location,
+        lat: Number(property.location.lat) || -6.7924,
+        lng: Number(property.location.lng) || 39.2083,
+        city: property.location.city || 'Dar es Salaam',
+        state: property.location.state || 'Tanzania',
+      },
+    }));
+  }, [listings, mapLocations]);
 
   const filteredMapProperties = useMemo(
     () => mapProperties.filter((property) => mapFilter === 'All' || (mapFilter === 'Buy' ? property.property_type === 'Invest' : property.property_type === 'Live')),
@@ -684,6 +698,42 @@ function App() {
       }
     };
 
+    const loadLocations = async () => {
+      try {
+        const response = await fetch(`${apiBase}/api/locations`);
+        if (!response.ok) throw new Error('Failed to load locations');
+        const payload = await response.json();
+        if (Array.isArray(payload.locations)) {
+          const nextMapLocations = payload.locations.map((item: any) => ({
+            id: String(item.id),
+            created_at: new Date().toISOString(),
+            title: item.title,
+            property_type: item.price && String(item.price).includes('M') ? 'Invest' : 'Live',
+            status: item.status === 'New' ? 'Pending' : 'Approved',
+            price: Number(String(item.price).replace(/[^0-9]/g, '')) || 0,
+            video_url: '',
+            thumbnail_url: '',
+            images: [''],
+            location: {
+              lat: Number(item.lat) || -6.7924,
+              lng: Number(item.lng) || 39.2083,
+              address: item.city,
+              city: item.city?.split('•')[0]?.trim() || item.city || 'Dar es Salaam',
+              state: 'Tanzania',
+              zip: '14111',
+            },
+            agent: { id: 'flx-db', name: 'FLX Realty', avatar: '', phone: '+255 712 345 678', email: 'hello@flxrealty.com', license: 'FLX', role: 'Agent' },
+            metadata: { beds: 0, baths: 0, sqft: 0 },
+            description: item.description || item.title,
+            featured: false,
+          }));
+          setMapLocations(nextMapLocations);
+        }
+      } catch {
+        setMapLocations([]);
+      }
+    };
+
     const loadSaved = async () => {
       try {
         const response = await fetch(`${apiBase}/api/saved?email=admin@flx.local`);
@@ -794,6 +844,7 @@ function App() {
 
     void hydrateSession();
     loadListings();
+    loadLocations();
     loadSaved();
     loadMarketInsights();
     fetchDashboardData();

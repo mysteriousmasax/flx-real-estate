@@ -32,12 +32,15 @@ body,
 
 html {
   scroll-behavior: smooth;
+  font-size: 17px;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   font-family: 'Poppins', sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
   background: linear-gradient(160deg, #f1e9df 0%, #f6f1ea 38%, #ece8e3 100%);
   color: var(--obsidian);
 }

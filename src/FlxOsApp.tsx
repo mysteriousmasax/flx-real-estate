@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { RealEstateLeafletMap } from "./components/RealEstateLeafletMap";
+import type { Property } from "./types";
 import {
   Activity,
   ArrowLeft,
@@ -350,6 +352,42 @@ function ExploreScreen({
 }) {
   const [filter, setFilter] = useState("Hostels");
   const [compareIds, setCompareIds] = useState<number[]>([1, 2]);
+  const mapLookup = useMemo(() => new Map(listings.map((listing) => [String(listing.id), listing])), [listings]);
+  const mapProperties = useMemo<Property[]>(() => listings.map((listing, index) => ({
+    id: String(listing.id),
+    created_at: new Date().toISOString(),
+    title: listing.title,
+    property_type: listing.category === "Commercial" ? "Invest" : "Live",
+    status: "Approved",
+    price: Number(String(listing.price).replace(/[^0-9]/g, "")) || 0,
+    video_url: "",
+    thumbnail_url: listing.image,
+    images: [listing.image],
+    location: {
+      lat: [-6.7720, -6.8190, -6.7420, -6.7380][index] ?? -6.7924,
+      lng: [39.2050, 39.2830, 39.2500, 39.2750][index] ?? 39.2083,
+      address: listing.city,
+      city: listing.city.split(",")[0].trim(),
+      state: "Tanzania",
+      zip: "14111",
+    },
+    agent: {
+      id: "flx-demo",
+      name: "FLX Realty",
+      avatar: "",
+      phone: "+255 712 345 678",
+      email: "hello@flxrealty.com",
+      license: "FLX",
+      role: "Agent",
+    },
+    metadata: {
+      beds: listing.category === "Hostels" ? 2 : 0,
+      baths: listing.category === "Hostels" ? 2 : 0,
+      sqft: listing.category === "Land" ? 600 : 2200,
+    },
+    description: listing.badge || listing.title,
+    featured: listing.id === 1,
+  })), [listings]);
   const filtered = listings.filter(
     (item) =>
       filter === "All" ||
@@ -365,7 +403,19 @@ function ExploreScreen({
       <div className="os-marketplace-location"><strong><span className="os-live-dot" /> Dar es Salaam Verified Marketplace</strong><span>142 Active Units • MLHHSD Real-Time Cadastral Geocodes</span><button>Change Metro</button></div>
       <div className="os-marketplace-filters"><div className="os-marketplace-pills">{[["All Units", "142"], ["Student Hostels", "58"], ["Commercial Offices", "24"], ["Cadastral Plots & Land", "38"], ["Luxury Flats", "22"]].map(([label, count], index) => <button key={label} className={index === 0 || (filter === "Hostels" && index === 1) ? "active" : ""} onClick={() => setFilter(index === 1 ? "Hostels" : index === 2 ? "Commercial" : index === 3 ? "Land" : "All")}>{label}<b>{count}</b></button>)}</div><select aria-label="Sort listings" defaultValue="Ministry vetted"><option>Ministry vetted</option><option>Nearest first</option><option>Price low to high</option></select></div>
       <div className="os-marketplace-constraints"><span>CONSTRAINTS:</span><b>Near UDSM (&lt;5km)</b><b>24/7 DAWASA Reserve</b><b>100% Redundant Genset</b><b>e-Ardhi Title Clean</b><b>Verified payment terms</b><em>Price cap: TZS 280k - 50M+</em></div>
-      <div className="os-marketplace-grid"><section className="os-marketplace-results"><div className="os-marketplace-results-heading"><div><h1>Dar es Salaam Verified Marketplace</h1><span>142 active units • live local verification</span></div><strong>99.8% title vetting</strong></div>{visibleListings.map((listing) => <article className={`os-market-listing ${compareIds.includes(listing.id) ? "is-compared" : ""}`} key={listing.id}><button className="os-market-listing-image" onClick={() => onOpen(listing)}><img src={listing.image} alt={listing.title} /><span>{listing.badge}</span><Heart size={16} /></button><div className="os-market-listing-copy"><div className="os-market-listing-topline"><span>{listing.category === "Land" ? "KIGAMBONI MUNICIPALITY" : listing.category === "Commercial" ? "ILALA CENTRAL • FINANCIAL DISTRICT" : "STUDENT LIVING"}</span><strong>{listing.price}<small>{listing.period}</small></strong></div><h2>{listing.title}</h2><div className="os-market-tags"><span><Check size={11} /> Verified title</span><span><Zap size={11} /> DAWASA / power ready</span></div><p>Turnkey property listing verified with local partners. Clear location context, practical amenities, and direct viewing support.</p><div className="os-market-actions"><label><input type="checkbox" checked={compareIds.includes(listing.id)} onChange={() => toggleCompare(listing.id)} /> Compare {listing.category?.toLowerCase()}</label><button className="os-secondary-button" onClick={() => onOpen(listing)}>View dossier</button><button className="os-primary-button" onClick={() => onOpen(listing)}>Request viewing <ArrowRight size={13} /></button></div></div></article>)}</section><aside className="os-market-map-panel"><div className="os-market-map-toolbar"><span>MAP LAYERS</span><button className="active">Cadastral</button><button>Satellite</button><button>DAWASA</button><button>BRT</button></div><div className="os-market-map-canvas"><div className="os-market-map-water" /><span className="os-map-city">Dar es Salaam</span><b className="os-market-map-pin pin-a">TZS 280k/sem</b><b className="os-market-map-pin pin-b">TZS 2.4M/mo</b><b className="os-market-map-pin pin-c">TZS 38M outright</b><span className="os-map-road road-a" /><span className="os-map-road road-b" /><div className="os-market-map-search"><Search size={12} /> Search &amp; pan map</div></div><div className="os-cadastral-index"><div><span>DAWASA pressure</span><strong>3.8 Bar</strong><small>Normal flow</small></div><div><span>TANESCO grid</span><strong>99.1%</strong><small>Sub-station Ubugo</small></div><div><span>e-Ardhi Sync</span><strong>&lt;3 mins</strong><small>Live API hook</small></div></div></aside></div>
+      <div className="os-marketplace-grid"><section className="os-marketplace-results"><div className="os-marketplace-results-heading"><div><h1>Dar es Salaam Verified Marketplace</h1><span>142 active units • live local verification</span></div><strong>99.8% title vetting</strong></div>{visibleListings.map((listing) => <article className={`os-market-listing ${compareIds.includes(listing.id) ? "is-compared" : ""}`} key={listing.id}><button className="os-market-listing-image" onClick={() => onOpen(listing)}><img src={listing.image} alt={listing.title} /><span>{listing.badge}</span><Heart size={16} /></button><div className="os-market-listing-copy"><div className="os-market-listing-topline"><span>{listing.category === "Land" ? "KIGAMBONI MUNICIPALITY" : listing.category === "Commercial" ? "ILALA CENTRAL • FINANCIAL DISTRICT" : "STUDENT LIVING"}</span><strong>{listing.price}<small>{listing.period}</small></strong></div><h2>{listing.title}</h2><div className="os-market-tags"><span><Check size={11} /> Verified title</span><span><Zap size={11} /> DAWASA / power ready</span></div><p>Turnkey property listing verified with local partners. Clear location context, practical amenities, and direct viewing support.</p><div className="os-market-actions"><label><input type="checkbox" checked={compareIds.includes(listing.id)} onChange={() => toggleCompare(listing.id)} /> Compare {listing.category?.toLowerCase()}</label><button className="os-secondary-button" onClick={() => onOpen(listing)}>View dossier</button><button className="os-primary-button" onClick={() => onOpen(listing)}>Request viewing <ArrowRight size={13} /></button></div></div></article>)}</section><aside className="os-market-map-panel"><div className="os-market-map-toolbar"><span>MAP LAYERS</span><button className="active">Cadastral</button><button>Satellite</button><button>DAWASA</button><button>BRT</button></div><RealEstateLeafletMap
+          properties={mapProperties}
+          selectedProperty={mapProperties[0] ?? null}
+          onSelectProperty={(property) => {
+            const match = mapLookup.get(property.id);
+            if (match) onOpen(match);
+          }}
+          onOpenDetails={(property) => {
+            const match = mapLookup.get(property.id);
+            if (match) onOpen(match);
+          }}
+          userLocation={null}
+        /><div className="os-cadastral-index"><div><span>DAWASA pressure</span><strong>3.8 Bar</strong><small>Normal flow</small></div><div><span>TANESCO grid</span><strong>99.1%</strong><small>Sub-station Ubugo</small></div><div><span>e-Ardhi Sync</span><strong>&lt;3 mins</strong><small>Live API hook</small></div></div></aside></div>
       {compareIds.length > 0 ? <div className="os-market-compare-tray"><span><b>{compareIds.length}</b> selected</span><strong>Side-by-Side Comparison</strong><small>Compare selected property specifications</small><button onClick={() => setCompareIds([])}>Clear</button><button className="os-primary-button">Launch specs matrix <ArrowRight size={13} /></button></div> : null}
       <div className="os-market-pagination"><span>Showing 1 to {visibleListings.length} of 142 cadastral assets</span><button>Previous</button><b>1</b><button>2</button><button>3</button><button>Next</button></div>
       <section className="os-conveyance-band"><ShieldCheck size={20} /><div><strong>FLX Sovereign Conveyance Framework</strong><span>Every parcel and property is reconciled against the Ministry of Lands and Bank of Tanzania standards.</span></div><span>e-Ardhi verified</span><span>RTK GPS demarcation</span></section>

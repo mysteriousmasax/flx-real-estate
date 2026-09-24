@@ -47,6 +47,8 @@ const postgresSchema = `
     verification TEXT NOT NULL,
     status VARCHAR(120) NOT NULL,
     description TEXT NOT NULL,
+    lat DOUBLE PRECISION DEFAULT -6.7924,
+    lng DOUBLE PRECISION DEFAULT 39.2083,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   );
 
@@ -156,6 +158,25 @@ fs.mkdirSync(dataDir, { recursive: true });
 const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
 
+const ensureListingLocationColumns = () => {
+  const columns = db.prepare("PRAGMA table_info(listings)").all();
+  const hasLat = columns.some((column) => column.name === 'lat');
+  const hasLng = columns.some((column) => column.name === 'lng');
+
+  if (!hasLat) {
+    db.exec('ALTER TABLE listings ADD COLUMN lat REAL DEFAULT -6.7924');
+  }
+  if (!hasLng) {
+    db.exec('ALTER TABLE listings ADD COLUMN lng REAL DEFAULT 39.2083');
+  }
+
+  db.exec(`
+    UPDATE listings
+    SET lat = COALESCE(lat, -6.7924), lng = COALESCE(lng, 39.2083)
+    WHERE lat IS NULL OR lng IS NULL
+  `);
+};
+
 const createSessionToken = (user) => {
   const token = crypto.randomUUID();
   sessions.set(token, {
@@ -188,6 +209,8 @@ const defaultProperties = [
     verification: 'Clean ministry title deed',
     status: 'Verified',
     description: 'Fully furnished student housing with 24/7 security, high-speed fiber internet, and a verified title deed in the UDSM corridor.',
+    lat: -6.7720,
+    lng: 39.2050,
   },
   {
     id: 2,
@@ -201,6 +224,8 @@ const defaultProperties = [
     verification: 'Power backup ready',
     status: 'Hot',
     description: 'Prime commercial tower suite with backup power, monitored security, and parking access close to the city center.',
+    lat: -6.8190,
+    lng: 39.2830,
   },
   {
     id: 3,
@@ -214,6 +239,8 @@ const defaultProperties = [
     verification: 'Surveyed parcel',
     status: 'New',
     description: 'Coastal parcel with a clear title and strong upside for a boutique residence or short-stay holiday investment.',
+    lat: -6.8280,
+    lng: 39.3010,
   },
 ];
 
@@ -365,7 +392,9 @@ const createTables = () => {
       tag TEXT NOT NULL,
       verification TEXT NOT NULL,
       status TEXT NOT NULL,
-      description TEXT NOT NULL
+      description TEXT NOT NULL,
+      lat REAL DEFAULT -6.7924,
+      lng REAL DEFAULT 39.2083
     );
 
     CREATE TABLE IF NOT EXISTS saved_listings (
@@ -415,8 +444,8 @@ const createTables = () => {
   const listingCount = db.prepare('SELECT COUNT(*) AS count FROM listings').get();
   if (!listingCount.count) {
     const insertListing = db.prepare(`
-      INSERT INTO listings (id, title, city, price, period, image, badge, tag, verification, status, description)
-      VALUES (@id, @title, @city, @price, @period, @image, @badge, @tag, @verification, @status, @description)
+      INSERT INTO listings (id, title, city, price, period, image, badge, tag, verification, status, description, lat, lng)
+      VALUES (@id, @title, @city, @price, @period, @image, @badge, @tag, @verification, @status, @description, @lat, @lng)
     `);
     const insertMany = db.transaction((rows) => {
       for (const row of rows) insertListing.run(row);
@@ -517,9 +546,11 @@ const createTables = () => {
 };
 
 createTables();
+ensureListingLocationColumns();
 
 export const createApp = () => {
   const app = express();
+  const distDir = path.join(__dirname, 'dist');
 
   app.use(express.json({ limit: '2mb' }));
   app.use((req, res, next) => {
@@ -529,6 +560,16 @@ export const createApp = () => {
     if (req.method === 'OPTIONS') return res.sendStatus(204);
     next();
   });
+
+  if (fs.existsSync(distDir)) {
+    app.use(express.static(distDir));
+    app.get(/^\/(?!api).*$/, (req, res) => {
+      if (req.path.startsWith('/api/')) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+      res.sendFile(path.join(distDir, 'index.html'));
+    });
+  }
 
   app.get('/api/health', (_req, res) => {
     res.json({
@@ -540,9 +581,36 @@ export const createApp = () => {
     });
   });
 
+  const normalizeListingRow = (row) => {
+    const lat = Number(row?.lat ?? row?.latitude ?? -6.7924);
+    const lng = Number(row?.lng ?? row?.longitude ?? 39.2083);
+    return {
+      ...row,
+      lat: Number.isFinite(lat) ? lat : -6.7924,
+      lng: Number.isFinite(lng) ? lng : 39.2083,
+    };
+  };
+
   app.get('/api/properties', (_req, res) => {
-    const rows = db.prepare('SELECT * FROM listings ORDER BY id ASC').all();
+    const rows = db.prepare('SELECT * FROM listings ORDER BY id ASC').all().map(normalizeListingRow);
     res.json({ properties: rows });
+  });
+
+  app.get('/api/locations', (_req, res) => {
+    const rows = db.prepare('SELECT id, title, city, lat, lng, price, status, description FROM listings ORDER BY id ASC').all().map(normalizeListingRow);
+    res.json({
+      locations: rows.map((row) => ({
+        id: row.id,
+        title: row.title,
+        city: row.city,
+        lat: row.lat,
+        lng: row.lng,
+        price: row.price,
+        status: row.status,
+        description: row.description,
+      })),
+      count: rows.length,
+    });
   });
 
   app.get('/api/market-summary', (_req, res) => {
@@ -698,7 +766,10 @@ export const createApp = () => {
   });
 
   app.post('/api/admin/properties', async (req, res) => {
-    const { title, city, price, period, image, badge, tag, verification, status, description } = req.body || {};
+    const { title, city, price, period, image, badge, tag, verification, status, description, lat, lng, location } = req.body || {};
+    const nextLat = Number(location?.lat ?? lat ?? -6.7924);
+    const nextLng = Number(location?.lng ?? lng ?? 39.2083);
+
     if (!title || !city || !price) {
       return res.status(400).json({ error: 'Title, city and price are required.' });
     }
@@ -707,12 +778,12 @@ export const createApp = () => {
       try {
         const client = await getPostgresClient();
         const query = `
-          INSERT INTO listings (title, city, price, period, image, badge, tag, verification, status, description)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+          INSERT INTO listings (title, city, price, period, image, badge, tag, verification, status, description, lat, lng)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         `;
-        await client.query(query, [title, city, price, period || 'On request', image || 'https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=900&q=80', badge || 'New', tag || 'Verified', verification || 'Ready for intake', status || 'New', description || 'Fresh listing added from FLX operations.']);
+        await client.query(query, [title, city, price, period || 'On request', image || 'https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=900&q=80', badge || 'New', tag || 'Verified', verification || 'Ready for intake', status || 'New', description || 'Fresh listing added from FLX operations.', nextLat, nextLng]);
         const result = await client.query('SELECT * FROM listings ORDER BY id ASC');
-        return res.status(201).json({ ok: true, properties: result.rows });
+        return res.status(201).json({ ok: true, properties: result.rows.map(normalizeListingRow) });
       } catch (error) {
         return res.status(500).json({ error: error instanceof Error ? error.message : 'Unable to create property.' });
       }
@@ -720,8 +791,8 @@ export const createApp = () => {
 
     const nextId = db.prepare('SELECT COALESCE(MAX(id), 0) + 1 AS nextId FROM listings').get().nextId;
     db.prepare(`
-      INSERT INTO listings (id, title, city, price, period, image, badge, tag, verification, status, description)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO listings (id, title, city, price, period, image, badge, tag, verification, status, description, lat, lng)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       nextId,
       title,
@@ -734,15 +805,19 @@ export const createApp = () => {
       verification || 'Ready for intake',
       status || 'New',
       description || 'Fresh listing added from FLX operations.',
+      Number.isFinite(nextLat) ? nextLat : -6.7924,
+      Number.isFinite(nextLng) ? nextLng : 39.2083,
     );
 
-    const rows = db.prepare('SELECT * FROM listings ORDER BY id ASC').all();
+    const rows = db.prepare('SELECT * FROM listings ORDER BY id ASC').all().map(normalizeListingRow);
     res.status(201).json({ ok: true, properties: rows });
   });
 
   app.put('/api/admin/properties/:id', async (req, res) => {
     const { id } = req.params;
-    const { title, city, price, period, image, badge, tag, verification, status, description } = req.body || {};
+    const { title, city, price, period, image, badge, tag, verification, status, description, lat, lng, location } = req.body || {};
+    const nextLat = Number(location?.lat ?? lat ?? -6.7924);
+    const nextLng = Number(location?.lng ?? lng ?? 39.2083);
     if (!title || !city || !price) {
       return res.status(400).json({ error: 'Title, city and price are required.' });
     }
@@ -751,35 +826,42 @@ export const createApp = () => {
       try {
         const client = await getPostgresClient();
         await client.query(
-          `UPDATE listings SET title = $1, city = $2, price = $3, period = $4, image = $5, badge = $6, tag = $7, verification = $8, status = $9, description = $10 WHERE id = $11`,
-          [title, city, price, period || 'On request', image || 'https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=900&q=80', badge || 'New', tag || 'Verified', verification || 'Ready for intake', status || 'New', description || 'Fresh listing added from FLX operations.', id],
+          `UPDATE listings SET title = $1, city = $2, price = $3, period = $4, image = $5, badge = $6, tag = $7, verification = $8, status = $9, description = $10, lat = $11, lng = $12 WHERE id = $13`,
+          [title, city, price, period || 'On request', image || 'https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=900&q=80', badge || 'New', tag || 'Verified', verification || 'Ready for intake', status || 'New', description || 'Fresh listing added from FLX operations.', nextLat, nextLng, id],
         );
         const result = await client.query('SELECT * FROM listings ORDER BY id ASC');
-        return res.json({ ok: true, properties: result.rows });
+        return res.json({ ok: true, properties: result.rows.map(normalizeListingRow) });
       } catch (error) {
         return res.status(500).json({ error: error instanceof Error ? error.message : 'Unable to update property.' });
       }
     }
 
+    const current = db.prepare('SELECT * FROM listings WHERE id = ?').get(Number(id));
+    if (!current) {
+      return res.status(404).json({ error: 'Property not found.' });
+    }
+
     db.prepare(`
       UPDATE listings
-      SET title = ?, city = ?, price = ?, period = ?, image = ?, badge = ?, tag = ?, verification = ?, status = ?, description = ?
+      SET title = ?, city = ?, price = ?, period = ?, image = ?, badge = ?, tag = ?, verification = ?, status = ?, description = ?, lat = ?, lng = ?
       WHERE id = ?
     `).run(
       title,
       city,
       price,
-      period || 'On request',
-      image || 'https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=900&q=80',
-      badge || 'New',
-      tag || 'Verified',
-      verification || 'Ready for intake',
-      status || 'New',
-      description || 'Fresh listing added from FLX operations.',
+      period || current.period || 'On request',
+      image || current.image || 'https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=900&q=80',
+      badge || current.badge || 'New',
+      tag || current.tag || 'Verified',
+      verification || current.verification || 'Ready for intake',
+      status || current.status || 'New',
+      description || current.description || 'Fresh listing added from FLX operations.',
+      Number.isFinite(nextLat) ? nextLat : current.lat ?? -6.7924,
+      Number.isFinite(nextLng) ? nextLng : current.lng ?? 39.2083,
       Number(id),
     );
 
-    const rows = db.prepare('SELECT * FROM listings ORDER BY id ASC').all();
+    const rows = db.prepare('SELECT * FROM listings ORDER BY id ASC').all().map(normalizeListingRow);
     res.json({ ok: true, properties: rows });
   });
 
